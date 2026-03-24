@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Palabras - Para Escritores</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 250px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1.05em;
+            font-family: 'Georgia', serif;
+            line-height: 1.8;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card p {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .results-section {
+            margin-top: 40px;
+        }
+
+        .results-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        .word-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .word-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .word-table th {
+            padding: 18px;
+            text-align: left;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        .word-table tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+
+        .word-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+
+        .word-row {
+            cursor: pointer;
+        }
+
+        .word-row td {
+            padding: 18px;
+            font-size: 1.05em;
+        }
+
+        .word-name {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .frequency {
+            color: #764ba2;
+            font-weight: bold;
+        }
+
+        .expand-icon {
+            transition: transform 0.3s ease;
+            display: inline-block;
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .phrases-row {
+            display: none;
+        }
+
+        .phrases-row.show {
+            display: table-row;
+        }
+
+        .phrases-cell {
+            padding: 0 18px 18px 18px;
+            background: #f8f9ff;
+        }
+
+        .phrases-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .phrase-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f5f7fa;
+            border-radius: 6px;
+            font-style: italic;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .phrase-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .phrase-item .highlight {
+            background: #ffd700;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.2em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .proximity-section {
+            margin-top: 40px;
+            padding: 25px;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+            border-radius: 12px;
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .proximity-section h2 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.6em;
+            font-weight: 600;
+        }
+
+        .proximity-section .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1em;
+        }
+
+        .proximity-warning {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6b6b;
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.1);
+        }
+
+        .proximity-warning:last-child {
+            margin-bottom: 0;
+        }
+
+        .warning-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .warning-word {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .warning-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .proximity-context {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .proximity-sentence {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 4px;
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .proximity-sentence:last-child {
+            margin-bottom: 0;
+        }
+
+        .sentence-number {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ff6b6b;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .no-warnings {
+            text-align: center;
+            padding: 30px;
+            color: #28a745;
+            font-size: 1.1em;
+        }
+
+        .no-warnings svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            color: #28a745;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-section label {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .filter-section input,
+        .filter-section select {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .filter-section input:focus,
+        .filter-section select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .word-table th,
+            .word-table td {
+                padding: 12px;
+                font-size: 0.95em;
+            }
+
+            .warning-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .filter-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✍️ Contador de Palabras</h1>
+            <p>Herramienta elegante para escritores y creadores de contenido</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <label for="textInput">Ingresa tu texto aquí:</label>
+                <textarea id="textInput" placeholder="Escribe o pega tu texto en español aquí. El análisis mostrará la frecuencia de cada palabra y las frases donde aparecen..."></textarea>
+            </div>
+
+            <div class="button-container">
+                <button onclick="analyzeText()">Analizar Texto</button>
+            </div>
+
+            <div id="statsContainer" class="stats hidden">
+                <div class="stat-card">
+                    <h3>Total Palabras</h3>
+                    <p id="totalWords">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Palabras Únicas</h3>
+                    <p id="uniqueWords">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Frases</h3>
+                    <p id="totalSentences">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Caracteres</h3>
+                    <p id="totalChars">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Tiempo de Lectura</h3>
+                    <p id="readingTime">0 min</p>
+                </div>
+            </div>
+
+            <div id="proximityContainer" class="proximity-section hidden">
+                <h2>⚠️ Análisis de Proximidad</h2>
+                <p class="subtitle">Palabras significativas repetidas en frases cercanas</p>
+                
+                <div class="filter-section">
+                    <div>
+                        <label>Sensibilidad:</label>
+                        <select id="proximityRange" onchange="analyzeText()">
+                            <option value="1">Alta (1 frase)</option>
+                            <option value="2" selected>Media (2 frases)</option>
+                            <option value="3">Baja (3 frases)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Longitud mínima:</label>
+                        <input type="number" id="minWordLength" value="4" min="3" max="10" onchange="analyzeText()" style="width: 70px;">
+                    </div>
+                    <div class="toggle-switch">
+                        <label>Solo palabras importantes</label>
+                        <label class="switch">
+                            <input type="checkbox" id="excludeStopWords" checked onchange="analyzeText()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="proximityWarnings"></div>
+            </div>
+
+            <div id="resultsContainer" class="results-section hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 style="margin: 0;">Frecuencia de Palabras</h2>
+                        <p style="color: #666; margin-top: 5px;">Haz clic en cualquier palabra para ver las frases donde aparece</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="wordSearch" placeholder="Buscar palabra..." 
+                               style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; width: 200px;"
+                               oninput="filterWordTable()">
+                        <button onclick="exportToCSV()" style="padding: 10px 20px; font-size: 0.9em;">
+                            📊 Exportar CSV
+                        </button>
+                    </div>
+                </div>
+                <table class="word-table">
+                    <thead>
+                        <tr>
+                            <th>Palabra</th>
+                            <th>Frecuencia</th>
+                            <th>Porcentaje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wordTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <p>Ingresa un texto para comenzar el análisis</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let wordData = {};
+        let sentences = [];
+        let totalWordCount = 0;
+
+        // Spanish stop words (connectors, articles, prepositions, etc.)
+        const spanishStopWords = new Set([
+            'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas',
+            'de', 'del', 'a', 'al', 'en', 'con', 'por', 'para', 'sin', 'sobre', 'entre', 'hasta', 'desde', 'hacia',
+            'y', 'e', 'o', 'u', 'pero', 'sino', 'aunque', 'ni', 'que', 'si', 'como', 'porque', 'cuando', 'donde',
+            'es', 'son', 'está', 'están', 'ser', 'estar', 'hay', 'fue', 'fueron', 'era', 'eran', 'sea', 'sean',
+            'he', 'ha', 'han', 'hemos', 'habéis', 'había', 'habían',
+            'muy', 'más', 'menos', 'mucho', 'mucha', 'muchos', 'muchas', 'poco', 'poca', 'pocos', 'pocas',
+            'todo', 'toda', 'todos', 'todas', 'otro', 'otra', 'otros', 'otras',
+            'este', 'esta', 'estos', 'estas', 'ese', 'esa', 'esos', 'esas', 'aquel', 'aquella', 'aquellos', 'aquellas',
+            'me', 'te', 'se', 'nos', 'os', 'le', 'les', 'lo', 'la', 'los', 'las',
+            'mi', 'tu', 'su', 'mis', 'tus', 'sus', 'nuestro', 'nuestra', 'nuestros', 'nuestras',
+            'yo', 'tú', 'él', 'ella', 'nosotros', 'nosotras', 'vosotros', 'vosotras', 'ellos', 'ellas',
+            'qué', 'quién', 'quiénes', 'cuál', 'cuáles', 'cuánto', 'cuánta', 'cuántos', 'cuántas',
+            'no', 'sí', 'también', 'tampoco', 'ya', 'aún', 'todavía',
+            'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'
+        ]);
+
+        function analyzeText() {
+            const text = document.getElementById('textInput').value.trim();
+            
+            if (!text) {
+                alert('Por favor, ingresa un texto para analizar.');
+                return;
+            }
+
+            // Reset data
+            wordData = {};
+            sentences = [];
+            totalWordCount = 0;
+
+            // Split text into sentences (considering Spanish punctuation)
+            sentences = text.match(/[^.!?¿¡]+[.!?]/g) || [text];
+            sentences = sentences.map(s => s.trim()).filter(s => s.length > 0);
+
+            // Process each sentence
+            sentences.forEach(sentence => {
+                // Extract words (considering Spanish characters)
+                const words = sentence.toLowerCase()
+                    .match(/[a-záéíóúñüA-ZÁÉÍÓÚÑÜ]+/g) || [];
+                
+                words.forEach(word => {
+                    totalWordCount++;
+                    
+                    if (!wordData[word]) {
+                        wordData[word] = {
+                            count: 0,
+                            phrases: []
+                        };
+                    }
+                    
+                    wordData[word].count++;
+                    
+                    // Add sentence if not already added
+                    if (!wordData[word].phrases.includes(sentence)) {
+                        wordData[word].phrases.push(sentence);
+                    }
+                });
+            });
+
+            // Display results
+            displayStats();
+            analyzeProximity();
+            displayWordTable();
+        }
+
+        function analyzeProximity() {
+            const proximityRange = parseInt(document.getElementById('proximityRange').value);
+            const minWordLength = parseInt(document.getElementById('minWordLength').value);
+            const excludeStopWords = document.getElementById('excludeStopWords').checked;
+            
+            const proximityIssues = [];
+            
+            // For each sentence, check words in nearby sentences
+            sentences.forEach((sentence, sentenceIndex) => {
+                const words = sentence.toLowerCase()
+                    .match(/[a-záéíóúñüA-ZÁÉÍÓÚÑÜ]+/g) || [];
+                
+                const uniqueWords = [...new Set(words)];
+                
+                uniqueWords.forEach(word => {
+                    // Apply filters
+                    if (word.length < minWordLength) return;
+                    if (excludeStopWords && spanishStopWords.has(word)) return;
+                    
+                    // Check if this word appears in nearby sentences
+                    const nearbyOccurrences = [];
+                    
+                    for (let i = sentenceIndex + 1; i <= Math.min(sentenceIndex + proximityRange, sentences.length - 1); i++) {
+                        const nearbySentence = sentences[i].toLowerCase();
+                        const nearbyWords = nearbySentence.match(/[a-záéíóúñüA-ZÁÉÍÓÚÑÜ]+/g) || [];
+                        
+                        if (nearbyWords.includes(word)) {
+                            nearbyOccurrences.push({
+                                sentenceIndex: i,
+                                sentence: sentences[i],
+                                distance: i - sentenceIndex
+                            });
+                        }
+                    }
+                    
+                    // If word appears in nearby sentences, record it
+                    if (nearbyOccurrences.length > 0) {
+                        // Check if we already recorded this issue
+                        const existingIssue = proximityIssues.find(issue => 
+                            issue.word === word && 
+                            issue.sentenceIndices.some(idx => 
+                                idx === sentenceIndex || nearbyOccurrences.some(occ => occ.sentenceIndex === idx)
+                            )
+                        );
+                        
+                        if (!existingIssue) {
+                            proximityIssues.push({
+                                word: word,
+                                sentenceIndices: [sentenceIndex, ...nearbyOccurrences.map(occ => occ.sentenceIndex)],
+                                sentences: [sentences[sentenceIndex], ...nearbyOccurrences.map(occ => occ.sentence)],
+                                minDistance: Math.min(...nearbyOccurrences.map(occ => occ.distance))
+                            });
+                        }
+                    }
+                });
+            });
+            
+            // Sort by when words first appear in the text (ascending)
+            proximityIssues.sort((a, b) => {
+                const firstAppearanceA = Math.min(...a.sentenceIndices);
+                const firstAppearanceB = Math.min(...b.sentenceIndices);
+                return firstAppearanceA - firstAppearanceB;
+            });
+            
+            displayProximityWarnings(proximityIssues);
+        }
+
+        function displayProximityWarnings(issues) {
+            const container = document.getElementById('proximityWarnings');
+            
+            if (issues.length === 0) {
+                container.innerHTML = `
+                    <div class="no-warnings">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <p>¡Excelente! No se detectaron repeticiones cercanas</p>
+                    </div>
+                `;
+            } else {
+                let html = '';
+                issues.forEach(issue => {
+                    const distanceText = issue.minDistance === 1 ? 'frases consecutivas' : `${issue.minDistance} frases de distancia`;
+                    
+                    html += `
+                        <div class="proximity-warning">
+                            <div class="warning-header">
+                                <div class="warning-word">"${issue.word}"</div>
+                                <div class="warning-badge">${distanceText}</div>
+                            </div>
+                            <p style="color: #666; margin-bottom: 10px;">
+                                Esta palabra aparece ${issue.sentenceIndices.length} veces en frases cercanas:
+                            </p>
+                            <div class="proximity-context">
+                    `;
+                    
+                    issue.sentences.forEach((sentence, idx) => {
+                        const regex = new RegExp(`\\b(${issue.word})\\b`, 'gi');
+                        const highlightedSentence = sentence.replace(regex, '<span class="highlight">$1</span>');
+                        const sentenceNum = issue.sentenceIndices[idx] + 1;
+                        
+                        html += `
+                            <div class="proximity-sentence">
+                                <div class="sentence-number">${sentenceNum}</div>
+                                ${highlightedSentence}
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            }
+            
+            document.getElementById('proximityContainer').classList.remove('hidden');
+        }
+
+        function displayStats() {
+            const uniqueWords = Object.keys(wordData).length;
+            const text = document.getElementById('textInput').value.trim();
+            const charCount = text.length;
+            
+            // Calculate reading time (average Spanish reading speed: 220 words per minute)
+            const readingTimeMinutes = Math.ceil(totalWordCount / 220);
+            const readingTimeText = readingTimeMinutes === 1 ? '1 min' : `${readingTimeMinutes} min`;
+            
+            document.getElementById('totalWords').textContent = totalWordCount;
+            document.getElementById('uniqueWords').textContent = uniqueWords;
+            document.getElementById('totalSentences').textContent = sentences.length;
+            document.getElementById('totalChars').textContent = charCount.toLocaleString();
+            document.getElementById('readingTime').textContent = readingTimeText;
+            
+            document.getElementById('statsContainer').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+        }
+
+        function displayWordTable() {
+            const tableBody = document.getElementById('wordTableBody');
+            tableBody.innerHTML = '';
+
+            // Sort words by frequency (descending)
+            const sortedWords = Object.entries(wordData)
+                .sort((a, b) => b[1].count - a[1].count);
+
+            sortedWords.forEach(([word, data], index) => {
+                const percentage = ((data.count / totalWordCount) * 100).toFixed(2);
+                
+                // Main word row
+                const wordRow = document.createElement('tr');
+                wordRow.className = 'word-row';
+                wordRow.innerHTML = `
+                    <td>
+                        <span class="expand-icon" id="icon-${index}">▶</span>
+                        <span class="word-name">${word}</span>
+                    </td>
+                    <td class="frequency">${data.count}</td>
+                    <td>${percentage}%</td>
+                `;
+                wordRow.onclick = () => togglePhrases(index);
+                
+                // Phrases row (initially hidden)
+                const phrasesRow = document.createElement('tr');
+                phrasesRow.className = 'phrases-row';
+                phrasesRow.id = `phrases-${index}`;
+                
+                const phrasesHTML = data.phrases.map(phrase => {
+                    // Highlight the word in the phrase
+                    const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+                    const highlightedPhrase = phrase.replace(regex, '<span class="highlight">$1</span>');
+                    return `<div class="phrase-item">${highlightedPhrase}</div>`;
+                }).join('');
+                
+                phrasesRow.innerHTML = `
+                    <td colspan="3" class="phrases-cell">
+                        <div class="phrases-container">
+                            <strong style="color: #667eea; margin-bottom: 10px; display: block;">
+                                Frases que contienen "${word}" (${data.phrases.length}):
+                            </strong>
+                            ${phrasesHTML}
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(wordRow);
+                tableBody.appendChild(phrasesRow);
+            });
+
+            document.getElementById('resultsContainer').classList.remove('hidden');
+        }
+
+        function togglePhrases(index) {
+            const phrasesRow = document.getElementById(`phrases-${index}`);
+            const icon = document.getElementById(`icon-${index}`);
+            
+            if (phrasesRow.classList.contains('show')) {
+                phrasesRow.classList.remove('show');
+                icon.classList.remove('expanded');
+            } else {
+                phrasesRow.classList.add('show');
+                icon.classList.add('expanded');
+            }
+        }
+
+        function filterWordTable() {
+            const searchTerm = document.getElementById('wordSearch').value.toLowerCase();
+            const tableBody = document.getElementById('wordTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.className === 'word-row') {
+                    const wordCell = row.querySelector('.word-name');
+                    if (wordCell) {
+                        const word = wordCell.textContent.toLowerCase();
+                        const nextRow = rows[i + 1]; // phrases row
+                        
+                        if (word.includes(searchTerm)) {
+                            row.style.display = '';
+                            if (nextRow && nextRow.className.includes('phrases-row')) {
+                                // Keep hidden unless it was already expanded
+                                if (!nextRow.classList.contains('show')) {
+                                    nextRow.style.display = 'none';
+                                }
+                            }
+                        } else {
+                            row.style.display = 'none';
+                            if (nextRow && nextRow.className.includes('phrases-row')) {
+                                nextRow.style.display = 'none';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function exportToCSV() {
+            if (Object.keys(wordData).length === 0) {
+                alert('No hay datos para exportar. Por favor, analiza un texto primero.');
+                return;
+            }
+
+            // Sort words by frequency
+            const sortedWords = Object.entries(wordData)
+                .sort((a, b) => b[1].count - a[1].count);
+
+            // Create CSV content
+            let csvContent = "Palabra,Frecuencia,Porcentaje,Frases de Ejemplo\n";
+            
+            sortedWords.forEach(([word, data]) => {
+                const percentage = ((data.count / totalWordCount) * 100).toFixed(2);
+                const examplePhrase = data.phrases[0].replace(/"/g, '""'); // Escape quotes
+                csvContent += `"${word}",${data.count},${percentage}%,"${examplePhrase}"\n`;
+            });
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'analisis_palabras.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Allow Enter key with Ctrl/Cmd to analyze
+        document.getElementById('textInput').addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                analyzeText();
+            }
+        });
+    </script>
+</body>
+</html>
+

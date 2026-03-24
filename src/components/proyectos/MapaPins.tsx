@@ -1,0 +1,298 @@
+"use client";
+
+import { useCallback, useRef, useState } from "react";
+import type { LugarPin } from "@/types/proyectos";
+
+interface MapaPinsProps {
+  mapaUrl: string;
+  pins: LugarPin[];
+  lugares: { id: string; nombre: string }[];
+  onPinsChange: (pins: LugarPin[]) => void;
+  onPinClick?: (lugarId: string) => void;
+  onUpload: (file: File) => Promise<void>;
+  onRemoveMap: () => void;
+  uploading?: boolean;
+}
+
+export function MapaPins({
+  mapaUrl,
+  pins,
+  lugares,
+  onPinsChange,
+  onPinClick,
+  onUpload,
+  onRemoveMap,
+  uploading,
+}: MapaPinsProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [placingPin, setPlacingPin] = useState(false);
+  const [selectedLugarId, setSelectedLugarId] = useState<string>("");
+  const [hoveredPin, setHoveredPin] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const availableLugares = lugares.filter(
+    (l) => !pins.some((p) => p.lugar_id === l.id)
+  );
+
+  const handleMapClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!placingPin || !selectedLugarId) return;
+
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+      const newPin: LugarPin = {
+        x: Math.round(x * 100) / 100,
+        y: Math.round(y * 100) / 100,
+        lugar_id: selectedLugarId,
+      };
+
+      onPinsChange([...pins, newPin]);
+      setPlacingPin(false);
+      setSelectedLugarId("");
+    },
+    [placingPin, selectedLugarId, pins, onPinsChange]
+  );
+
+  const removePin = useCallback(
+    (lugarId: string) => {
+      onPinsChange(pins.filter((p) => p.lugar_id !== lugarId));
+    },
+    [pins, onPinsChange]
+  );
+
+  const getLugarNombre = (lugarId: string) =>
+    lugares.find((l) => l.id === lugarId)?.nombre ?? "?";
+
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) onUpload(file);
+      e.target.value = "";
+    },
+    [onUpload]
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file?.type.startsWith("image/")) onUpload(file);
+    },
+    [onUpload]
+  );
+
+  if (!mapaUrl) {
+    return (
+      <div className="space-y-2">
+        <p className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium">
+          Mapa
+        </p>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => inputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
+          }}
+          onDrop={handleDrop}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors ${
+            dragOver
+              ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]/10"
+              : "border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-cream)]"
+          }`}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileInput}
+            className="hidden"
+          />
+          {uploading ? (
+            <div className="w-6 h-6 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8 text-[var(--color-ink-muted)]">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+              </svg>
+              <span className="text-sm text-[var(--color-ink-muted)]">
+                Arrastra o haz clic para subir un mapa
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium">
+          Mapa
+        </p>
+        <div className="flex items-center gap-2">
+          {!placingPin && availableLugares.length > 0 && (
+            <button
+              onClick={() => setPlacingPin(true)}
+              className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors"
+            >
+              + Pin
+            </button>
+          )}
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors"
+          >
+            Cambiar
+          </button>
+          <button
+            onClick={onRemoveMap}
+            className="text-xs text-[var(--color-ink-muted)] hover:text-red-600 transition-colors"
+          >
+            Quitar
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileInput}
+            className="hidden"
+          />
+        </div>
+      </div>
+
+      {placingPin && (
+        <div className="flex items-center gap-2 rounded-lg border border-[var(--color-accent-light)] bg-[var(--color-cream)] p-2">
+          <select
+            value={selectedLugarId}
+            onChange={(e) => setSelectedLugarId(e.target.value)}
+            className="flex-1 rounded-md border border-[var(--color-border)] bg-white px-2 py-1 text-xs text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
+          >
+            <option value="">Selecciona un lugar...</option>
+            {availableLugares.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.nombre || "Sin nombre"}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-[var(--color-ink-muted)]">
+            {selectedLugarId ? "Haz clic en el mapa" : ""}
+          </span>
+          <button
+            onClick={() => { setPlacingPin(false); setSelectedLugarId(""); }}
+            className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
+
+      <div
+        ref={containerRef}
+        onClick={handleMapClick}
+        className={`relative rounded-lg overflow-hidden border border-[var(--color-border)] ${
+          placingPin && selectedLugarId ? "cursor-crosshair" : ""
+        }`}
+      >
+        <img
+          src={mapaUrl}
+          alt="Mapa del lugar"
+          className="w-full h-auto block"
+          draggable={false}
+        />
+
+        {pins.map((pin) => (
+          <div
+            key={pin.lugar_id}
+            className="absolute group"
+            style={{
+              left: `${pin.x}%`,
+              top: `${pin.y}%`,
+              transform: "translate(-50%, -100%)",
+            }}
+            onMouseEnter={() => setHoveredPin(pin.lugar_id)}
+            onMouseLeave={() => setHoveredPin(null)}
+          >
+            {/* Pin marker */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onPinClick) onPinClick(pin.lugar_id);
+              }}
+              className="relative flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="var(--color-accent)"
+                className="w-7 h-7 drop-shadow-md hover:scale-110 transition-transform"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 0 0-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 0 0 3.573 2.924l.254.1Zm.46-13.851a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+
+            {/* Tooltip */}
+            {hoveredPin === pin.lugar_id && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap z-10">
+                <div className="bg-[var(--color-ink)] text-white text-xs rounded px-2 py-1 shadow-lg flex items-center gap-1.5">
+                  <span>{getLugarNombre(pin.lugar_id)}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removePin(pin.lugar_id);
+                    }}
+                    className="text-white/60 hover:text-white ml-1"
+                    title="Quitar pin"
+                  >
+                    &times;
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Pin list */}
+      {pins.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {pins.map((pin) => (
+            <span
+              key={pin.lugar_id}
+              className="inline-flex items-center gap-1 rounded-full border border-[var(--color-accent-light)] px-2 py-0.5 text-xs text-[var(--color-ink)]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="var(--color-accent)" className="w-3 h-3">
+                <path fillRule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clipRule="evenodd" />
+              </svg>
+              <button
+                onClick={() => onPinClick?.(pin.lugar_id)}
+                className="hover:text-[var(--color-accent)] transition-colors"
+              >
+                {getLugarNombre(pin.lugar_id)}
+              </button>
+              <button
+                onClick={() => removePin(pin.lugar_id)}
+                className="text-[var(--color-ink-muted)] hover:text-red-600 ml-0.5"
+              >
+                &times;
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
