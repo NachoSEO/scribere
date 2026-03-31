@@ -179,8 +179,21 @@ export interface Arco extends BaseEntity {
   planteamiento: string;
   nudo: string;
   desenlace: string;
+  hito_origen_id: string | null;
+  hito_destino_id: string | null;
+  tipo_resolucion: string;
   posicion: number;
 }
+
+export type TipoResolucion = '' | 'si' | 'si_pero' | 'no_y' | 'no';
+
+export const TIPO_RESOLUCION_OPTIONS: { value: TipoResolucion; label: string; color: string }[] = [
+  { value: '',        label: 'Sin definir', color: '#f3f4f6' },
+  { value: 'si',      label: 'Sí',          color: '#d1fae5' },
+  { value: 'si_pero', label: 'Sí, pero...', color: '#fef3c7' },
+  { value: 'no_y',    label: 'No, y...',     color: '#fee2e2' },
+  { value: 'no',      label: 'No',           color: '#fecaca' },
+];
 
 export type ArcoInsert = Pick<Arco, "nombre"> & Partial<Omit<Arco, keyof BaseEntity | "proyecto_id" | "nombre">>;
 export type ArcoUpdate = Partial<Omit<Arco, keyof BaseEntity | "proyecto_id">>;
