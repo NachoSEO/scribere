@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import type { Fase, Hito, Arco, Escena, ManuscritoCarpeta } from "@/types/proyectos";
+import type { Escena, ManuscritoCarpeta } from "@/types/proyectos";
+import { ESCENA_ESTADO_OPTIONS } from "@/types/proyectos";
 
 // ── Icons ────────────────────────────────────────────────────
 
@@ -59,6 +60,10 @@ function EscenaRow({ escena, selected, paddingLeft, onSelect, onDelete }: {
     >
       <button onClick={() => onSelect(escena.id)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
         <PageIcon selected={selected} />
+        {escena.estado && (() => {
+          const opt = ESCENA_ESTADO_OPTIONS.find((o) => o.value === escena.estado);
+          return opt ? <span className="shrink-0 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: selected ? 'rgba(255,255,255,0.6)' : opt.color }} /> : null;
+        })()}
         <span className="truncate flex-1">{escena.resumen || "Sin título"}</span>
       </button>
       {onDelete && (
@@ -105,14 +110,11 @@ function InlineInput({ inputRef, value, onChange, onKeyDown, onBlur, paddingLeft
 // ── Main FileTree ─────────────────────────────────────────────
 
 export interface FileTreeProps {
-  fases: Fase[];
-  hitos: Hito[];
-  arcos: Arco[];
   escenas: Escena[];
   carpetas: ManuscritoCarpeta[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onCreateEscena: (nombre: string, hitoId: string | null, carpetaId?: string | null) => Promise<void>;
+  onCreateEscena: (nombre: string, carpetaId: string | null) => Promise<void>;
   onDeleteEscena?: (id: string) => Promise<void>;
   onCreateCarpeta: (nombre: string, padreId: string | null) => Promise<void>;
   onDeleteCarpeta?: (id: string) => Promise<void>;
@@ -120,7 +122,7 @@ export interface FileTreeProps {
 }
 
 export function FileTree({
-  fases, hitos, arcos, escenas, carpetas,
+  escenas, carpetas,
   selectedId, onSelect,
   onCreateEscena, onDeleteEscena,
   onCreateCarpeta, onDeleteCarpeta, onRenameCarpeta,
@@ -153,7 +155,7 @@ export function FileTree({
     const name = newName.trim();
     if (!name || !creating) { setCreating(null); setNewName(""); return; }
     if (creating.type === "escena") {
-      await onCreateEscena(name, null, creating.parentId);
+      await onCreateEscena(name, creating.parentId);
     } else {
       await onCreateCarpeta(name, creating.parentId);
     }
@@ -175,18 +177,6 @@ export function FileTree({
   }, [renaming, renameValue, onRenameCarpeta]);
 
   // Group data
-  const escenasByHito = useMemo(() => {
-    const map = new Map<string | null, Escena[]>();
-    for (const escena of escenas) {
-      if (escena.carpeta_id) continue; // Skip escenas in carpetas
-      const key = escena.hito_id ?? null;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(escena);
-    }
-    for (const arr of map.values()) arr.sort((a, b) => a.posicion - b.posicion);
-    return map;
-  }, [escenas]);
-
   const escenasByCarpeta = useMemo(() => {
     const map = new Map<string, Escena[]>();
     for (const escena of escenas) {
@@ -198,28 +188,6 @@ export function FileTree({
     return map;
   }, [escenas]);
 
-  const hitosByFase = useMemo(() => {
-    const map = new Map<string | null, Hito[]>();
-    for (const hito of hitos) {
-      const key = hito.fase_id ?? null;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(hito);
-    }
-    for (const arr of map.values()) arr.sort((a, b) => a.posicion - b.posicion);
-    return map;
-  }, [hitos]);
-
-  const arcosByHitoOrigen = useMemo(() => {
-    const map = new Map<string, Arco[]>();
-    for (const arco of arcos) {
-      if (!arco.hito_origen_id) continue;
-      if (!map.has(arco.hito_origen_id)) map.set(arco.hito_origen_id, []);
-      map.get(arco.hito_origen_id)!.push(arco);
-    }
-    return map;
-  }, [arcos]);
-
-  const sortedFases = useMemo(() => [...fases].sort((a, b) => a.posicion - b.posicion), [fases]);
   const rootCarpetas = useMemo(() => carpetas.filter((c) => !c.carpeta_padre_id).sort((a, b) => a.posicion - b.posicion), [carpetas]);
   const childCarpetas = useMemo(() => {
     const map = new Map<string, ManuscritoCarpeta[]>();
@@ -232,7 +200,10 @@ export function FileTree({
     return map;
   }, [carpetas]);
 
-  const sueltas = escenasByHito.get(null) ?? [];
+  const sueltas = useMemo(
+    () => escenas.filter((e) => !e.carpeta_id).sort((a, b) => a.posicion - b.posicion),
+    [escenas]
+  );
 
   function renderCarpeta(carpeta: ManuscritoCarpeta, depth: number) {
     const pl = 12 + depth * 16;
@@ -326,109 +297,13 @@ export function FileTree({
 
       {/* Tree */}
       <div className="flex-1 overflow-y-auto custom-scrollbar py-1">
-        {/* Planificación structure: Fases > Hitos > Arcos > Escenas */}
-        {sortedFases.length > 0 && (
-          <div>
-            <div className="px-3 py-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
-                Planificación
-              </span>
-            </div>
-            {sortedFases.map((fase) => {
-              const faseCollapsed = collapsed.has(fase.id);
-              const faseHitos = hitosByFase.get(fase.id) ?? [];
+        {/* Carpetas */}
+        {rootCarpetas.map((c) => renderCarpeta(c, 0))}
 
-              return (
-                <div key={fase.id}>
-                  <button
-                    onClick={() => toggleCollapse(fase.id)}
-                    className="flex items-center gap-1.5 w-full px-3 py-1.5 text-left hover:bg-[var(--color-parchment)] transition-colors"
-                  >
-                    <ChevronIcon collapsed={faseCollapsed} />
-                    <FolderIcon />
-                    <span className="text-xs font-semibold text-[var(--color-ink)] truncate flex-1">
-                      {fase.nombre || "Sin nombre"}
-                    </span>
-                  </button>
-
-                  {!faseCollapsed && (
-                    <div>
-                      {faseHitos.map((hito) => {
-                        const hitoCollapsed = collapsed.has(hito.id);
-                        const hitoEscenas = escenasByHito.get(hito.id) ?? [];
-                        const hitoArcos = arcosByHitoOrigen.get(hito.id) ?? [];
-
-                        return (
-                          <div key={hito.id}>
-                            <button
-                              onClick={() => toggleCollapse(hito.id)}
-                              className="flex items-center gap-1.5 w-full pl-6 pr-3 py-1.5 text-left hover:bg-[var(--color-parchment)] transition-colors"
-                            >
-                              <ChevronIcon collapsed={hitoCollapsed} />
-                              <FolderIcon small />
-                              <span className="text-xs font-medium text-[var(--color-ink-light)] truncate flex-1">
-                                {hito.hito || "Sin nombre"}
-                              </span>
-                            </button>
-
-                            {!hitoCollapsed && (
-                              <div>
-                                {/* Arcos under this hito */}
-                                {hitoArcos.map((arco) => (
-                                  <div key={arco.id} className="flex items-center gap-1.5 pl-12 pr-3 py-1 text-xs text-[var(--color-ink-muted)]">
-                                    <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-[var(--color-accent-light)]" />
-                                    <span className="truncate">{arco.nombre || "Arco sin nombre"}</span>
-                                  </div>
-                                ))}
-                                {/* Escenas under this hito */}
-                                {hitoEscenas.map((escena) => (
-                                  <EscenaRow
-                                    key={escena.id}
-                                    escena={escena}
-                                    selected={escena.id === selectedId}
-                                    paddingLeft={48}
-                                    onSelect={onSelect}
-                                    onDelete={onDeleteEscena}
-                                  />
-                                ))}
-                                {creating?.type === "escena" && creating.parentId === hito.id && (
-                                  <InlineInput inputRef={inputRef} value={newName} onChange={setNewName} onKeyDown={handleKeyDown} onBlur={handleCreate} paddingLeft={48} placeholder="Nombre de la escena..." />
-                                )}
-                                <button
-                                  onClick={() => setCreating({ type: "escena", parentId: hito.id })}
-                                  className="flex items-center gap-1.5 w-full pl-12 pr-3 py-1 text-left text-[10px] text-[var(--color-ink-muted)] hover:text-[var(--color-accent)] transition-colors"
-                                >
-                                  + Escena
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Custom carpetas */}
-        {(rootCarpetas.length > 0 || sueltas.length > 0) && (
-          <div className="mt-2">
-            <div className="px-3 py-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
-                Carpetas
-              </span>
-            </div>
-            {rootCarpetas.map((c) => renderCarpeta(c, 0))}
-
-            {/* Sueltas (no folder, no hito) */}
-            {sueltas.map((escena) => (
-              <EscenaRow key={escena.id} escena={escena} selected={escena.id === selectedId} paddingLeft={12} onSelect={onSelect} onDelete={onDeleteEscena} />
-            ))}
-          </div>
-        )}
+        {/* Sueltas (scenes without folder) */}
+        {sueltas.map((escena) => (
+          <EscenaRow key={escena.id} escena={escena} selected={escena.id === selectedId} paddingLeft={12} onSelect={onSelect} onDelete={onDeleteEscena} />
+        ))}
       </div>
 
       {/* Bottom: create buttons */}

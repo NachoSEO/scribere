@@ -26,6 +26,11 @@ import type {
   EscenaEvento,
   PersonajeEvolucion,
   ManuscritoCarpeta, ManuscritoCarpetaInsert, ManuscritoCarpetaUpdate,
+  EscenaVersion, EscenaVersionInsert,
+  EscenaTarea, EscenaTareaInsert, EscenaTareaUpdate,
+  Idea, IdeaInsert, IdeaUpdate,
+  EscenaIdea,
+  LugarRuta, LugarRutaInsert, LugarRutaUpdate,
 } from "@/types/proyectos";
 
 const sb = createClient();
@@ -832,4 +837,163 @@ export function useManuscritoCarpetas(projectId: string) {
   }, []);
 
   return { carpetas, create, update, remove };
+}
+
+// ── Escena Versiones ──────────────────────────────────────
+
+export function useEscenaVersiones(escenaId: string) {
+  const [versiones, setVersiones] = useState<EscenaVersion[]>([]);
+
+  useEffect(() => {
+    q.fetchEscenaVersiones(sb, escenaId).then(setVersiones).catch(console.error);
+    return () => setVersiones([]);
+  }, [escenaId]);
+
+  const create = useCallback(async (data: EscenaVersionInsert) => {
+    const version = await q.createEscenaVersion(sb, escenaId, data);
+    setVersiones((prev) => [version, ...prev]);
+    return version;
+  }, [escenaId]);
+
+  const remove = useCallback(async (id: string) => {
+    await q.deleteEscenaVersion(sb, id);
+    setVersiones((prev) => prev.filter((v) => v.id !== id));
+  }, []);
+
+  return { versiones, create, remove };
+}
+
+// ── Escena Tareas ─────────────────────────────────────────
+
+export function useEscenaTareas(escenaId: string) {
+  const [tareas, setTareas] = useState<EscenaTarea[]>([]);
+  const proyectoId = useProyectosStore((s) => s.currentProyecto?.id);
+
+  useEffect(() => {
+    q.fetchEscenaTareas(sb, escenaId).then(setTareas).catch(console.error);
+    return () => setTareas([]);
+  }, [escenaId]);
+
+  const create = useCallback(async (data: EscenaTareaInsert) => {
+    if (!proyectoId) throw new Error("No proyecto selected");
+    const tarea = await q.createEscenaTarea(sb, escenaId, proyectoId, data);
+    setTareas((prev) => [...prev, tarea]);
+    return tarea;
+  }, [escenaId, proyectoId]);
+
+  const update = useCallback(async (id: string, data: EscenaTareaUpdate) => {
+    const updated = await q.updateEscenaTarea(sb, id, data);
+    setTareas((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    return updated;
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    await q.deleteEscenaTarea(sb, id);
+    setTareas((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  return { tareas, create, update, remove };
+}
+
+// ── Proyecto Tareas (kanban) ──────────────────────────────
+
+export function useProyectoTareas(proyectoId: string) {
+  const [tareas, setTareas] = useState<EscenaTarea[]>([]);
+
+  useEffect(() => {
+    q.fetchProyectoTareas(sb, proyectoId).then(setTareas).catch(console.error);
+    return () => setTareas([]);
+  }, [proyectoId]);
+
+  const update = useCallback(async (id: string, data: EscenaTareaUpdate) => {
+    const updated = await q.updateEscenaTarea(sb, id, data);
+    setTareas((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    return updated;
+  }, []);
+
+  return { tareas, update };
+}
+
+// ── Ideas ─────────────────────────────────────────────────
+
+export function useIdeas(proyectoId: string) {
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+
+  useEffect(() => {
+    q.fetchIdeas(sb, proyectoId).then(setIdeas).catch(console.error);
+    return () => setIdeas([]);
+  }, [proyectoId]);
+
+  const create = useCallback(async (data: IdeaInsert) => {
+    const idea = await q.createIdea(sb, proyectoId, data);
+    setIdeas((prev) => [idea, ...prev]);
+    return idea;
+  }, [proyectoId]);
+
+  const update = useCallback(async (id: string, data: IdeaUpdate) => {
+    const updated = await q.updateIdea(sb, id, data);
+    setIdeas((prev) => prev.map((i) => (i.id === id ? updated : i)));
+    return updated;
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    await q.deleteIdea(sb, id);
+    setIdeas((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  return { ideas, create, update, remove };
+}
+
+// ── Escena Ideas (junction) ──────────────────────────────
+
+export function useEscenaIdeas(escenaId: string) {
+  const [links, setLinks] = useState<EscenaIdea[]>([]);
+
+  useEffect(() => {
+    q.fetchEscenaIdeas(sb, escenaId).then(setLinks).catch(console.error);
+  }, [escenaId]);
+
+  const add = useCallback(async (ideaId: string) => {
+    const link = await q.addEscenaIdea(sb, escenaId, ideaId);
+    setLinks((prev) => [...prev, link]);
+  }, [escenaId]);
+
+  const remove = useCallback(async (id: string) => {
+    await q.removeEscenaIdea(sb, id);
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
+  return { links, add, remove };
+}
+
+// ── Lugar Rutas ───────────────────────────────────────────
+
+export function useLugarRutas(lugarId: string) {
+  const [rutas, setRutas] = useState<LugarRuta[]>([]);
+  const proyectoId = useProyectosStore((s) => s.currentProyecto?.id);
+
+  useEffect(() => {
+    q.fetchLugarRutas(sb, lugarId).then(setRutas).catch(console.error);
+    return () => setRutas([]);
+  }, [lugarId]);
+
+  const create = useCallback(async (data: LugarRutaInsert) => {
+    if (!proyectoId) throw new Error("No proyecto selected");
+    const ruta = await q.createLugarRuta(sb, proyectoId, lugarId, data);
+    setRutas((prev) => [...prev, ruta]);
+    return ruta;
+  }, [lugarId, proyectoId]);
+
+  const update = useCallback(async (id: string, data: LugarRutaUpdate) => {
+    const updated = await q.updateLugarRuta(sb, id, data);
+    setRutas((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    return updated;
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    await q.deleteLugarRuta(sb, id);
+    setRutas((prev) => prev.filter((r) => r.id !== id));
+  }, []);
+
+  return { rutas, create, update, remove };
 }

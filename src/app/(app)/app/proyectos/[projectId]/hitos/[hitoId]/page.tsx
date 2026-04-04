@@ -6,25 +6,21 @@ import {
   useHito, useHitos, useFases, useLugares, usePersonajes, useEventos,
   useHitoPersonajes, useHitoEventos,
 } from "@/lib/proyectos/hooks";
-import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
+import { FormField } from "@/components/proyectos/FormField";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
 import { LinkedEntities } from "@/components/proyectos/LinkedEntities";
 import { EntityPreviewPanel } from "@/components/proyectos/EntityPreviewPanel";
 import type { MentionType } from "@/lib/proyectos/entity-config";
 
-const fields: FieldConfig[] = [
-  { key: "hito", label: "Hito", placeholder: "Qué sucede en este punto de la historia" },
-  { key: "informacion", label: "Información", multiline: true, rows: 3, placeholder: "Qué información se revela..." },
-  { key: "efecto", label: "Efecto", multiline: true, rows: 2, placeholder: "Qué efecto tiene en la historia..." },
-  { key: "origen_informacion", label: "Origen de la información", placeholder: "Cómo se descubre esta información..." },
+const tipoOptions = [
+  { value: "normalidad", label: "Normalidad", color: "#f3f4f6" },
+  { value: "cambio_de_fase", label: "Cambio de fase", color: "#fef3c7" },
+  { value: "incidente_incitador", label: "Incidente incitador", color: "#fee2e2" },
 ];
 
-const tipoOptions = [
-  { value: "normalidad", label: "Normalidad" },
-  { value: "cambio_de_fase", label: "Cambio de fase" },
-  { value: "incidente_incitador", label: "Incidente incitador" },
-];
+const selectClasses =
+  "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors";
 
 export default function HitoDetailPage({
   params,
@@ -43,16 +39,6 @@ export default function HitoDetailPage({
   const heLinks = useHitoEventos(hitoId);
   const [showDelete, setShowDelete] = useState(false);
   const [previewEntity, setPreviewEntity] = useState<{ id: string; type: MentionType } | null>(null);
-
-  const values = useMemo((): Record<string, string> => {
-    if (!hito) return {};
-    return {
-      hito: hito.hito,
-      informacion: hito.informacion,
-      efecto: hito.efecto,
-      origen_informacion: hito.origen_informacion,
-    };
-  }, [hito]);
 
   const handleChange = useCallback((key: string, value: string) => {
     save({ [key]: value });
@@ -95,92 +81,152 @@ export default function HitoDetailPage({
       </div>
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
-      <div className="mt-6 space-y-6">
-        <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
-
-        {/* Tipo selector */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Tipo
-          </label>
-          <select
-            value={hito.tipo}
-            onChange={(e) => save({ tipo: e.target.value as typeof hito.tipo })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            {tipoOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+      <div className="mt-5 space-y-4">
+        {/* Descripción card */}
+        <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+          <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-2">
+            Descripción
+          </h2>
+          <div className="space-y-3">
+            <FormField
+              label="Hito"
+              value={hito.hito ?? ""}
+              onChange={(v) => handleChange("hito", v)}
+              multiline
+              rows={2}
+              placeholder="Qué sucede en este punto de la historia"
+              projectId={projectId}
+            />
+            <FormField
+              label="Información"
+              value={hito.informacion ?? ""}
+              onChange={(v) => handleChange("informacion", v)}
+              multiline
+              rows={2}
+              placeholder="Qué información se revela..."
+              projectId={projectId}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Efecto"
+                value={hito.efecto ?? ""}
+                onChange={(v) => handleChange("efecto", v)}
+                multiline
+                rows={2}
+                placeholder="Qué efecto tiene en la historia..."
+                projectId={projectId}
+              />
+              <FormField
+                label="Origen de la información"
+                value={hito.origen_informacion ?? ""}
+                onChange={(v) => handleChange("origen_informacion", v)}
+                multiline
+                rows={2}
+                placeholder="Cómo se descubre esta información..."
+                projectId={projectId}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* FK selectors */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Fase
-          </label>
-          <select
-            value={hito.fase_id ?? ""}
-            onChange={(e) => save({ fase_id: e.target.value || null })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin fase</option>
-            {fases.map((f) => (
-              <option key={f.id} value={f.id}>{f.nombre || "Sin nombre"}</option>
-            ))}
-          </select>
+        {/* Clasificación + Contexto — 2-column grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Clasificación card */}
+          <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-3">
+              Clasificación
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {tipoOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => save({ tipo: opt.value as typeof hito.tipo })}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                    hito.tipo === opt.value
+                      ? "ring-2 ring-[var(--color-accent)] ring-offset-1"
+                      : "opacity-60 hover:opacity-100"
+                  }`}
+                  style={{ backgroundColor: opt.color }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Contexto card */}
+          <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-3">
+              Contexto
+            </h2>
+            <div className="space-y-2.5">
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Fase</label>
+                <select
+                  value={hito.fase_id ?? ""}
+                  onChange={(e) => save({ fase_id: e.target.value || null })}
+                  className={selectClasses}
+                >
+                  <option value="">Sin fase</option>
+                  {fases.map((f) => (
+                    <option key={f.id} value={f.id}>{f.nombre || "Sin nombre"}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Lugar</label>
+                <select
+                  value={hito.lugar_id ?? ""}
+                  onChange={(e) => save({ lugar_id: e.target.value || null })}
+                  className={selectClasses}
+                >
+                  <option value="">Sin lugar</option>
+                  {lugares.map((l) => (
+                    <option key={l.id} value={l.id}>{l.nombre || "Sin nombre"}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">POV Personaje</label>
+                <select
+                  value={hito.pov_personaje_id ?? ""}
+                  onChange={(e) => save({ pov_personaje_id: e.target.value || null })}
+                  className={selectClasses}
+                >
+                  <option value="">Sin POV</option>
+                  {personajes.map((p) => (
+                    <option key={p.id} value={p.id}>{p.nombre || "Sin nombre"}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Lugar
-          </label>
-          <select
-            value={hito.lugar_id ?? ""}
-            onChange={(e) => save({ lugar_id: e.target.value || null })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin lugar</option>
-            {lugares.map((l) => (
-              <option key={l.id} value={l.id}>{l.nombre || "Sin nombre"}</option>
-            ))}
-          </select>
+        {/* Relaciones card */}
+        <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+          <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-2">
+            Relaciones
+          </h2>
+          <div className="grid grid-cols-2 gap-4">
+            <JunctionSelector
+              label="Personajes involucrados"
+              linkedIds={personajeIds}
+              options={personajes}
+              onAdd={hpLinks.add}
+              onRemove={hpLinks.remove}
+              junctionMap={personajeJunctionMap}
+            />
+            <JunctionSelector
+              label="Eventos relacionados"
+              linkedIds={eventoIds}
+              options={eventos}
+              onAdd={heLinks.add}
+              onRemove={heLinks.remove}
+              junctionMap={eventoJunctionMap}
+            />
+          </div>
         </div>
-
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            POV Personaje
-          </label>
-          <select
-            value={hito.pov_personaje_id ?? ""}
-            onChange={(e) => save({ pov_personaje_id: e.target.value || null })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin POV</option>
-            {personajes.map((p) => (
-              <option key={p.id} value={p.id}>{p.nombre || "Sin nombre"}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Junction selectors */}
-        <JunctionSelector
-          label="Personajes involucrados"
-          linkedIds={personajeIds}
-          options={personajes}
-          onAdd={hpLinks.add}
-          onRemove={hpLinks.remove}
-          junctionMap={personajeJunctionMap}
-        />
-
-        <JunctionSelector
-          label="Eventos relacionados"
-          linkedIds={eventoIds}
-          options={eventos}
-          onAdd={heLinks.add}
-          onRemove={heLinks.remove}
-          junctionMap={eventoJunctionMap}
-        />
 
         {/* Linked entities summary */}
         <LinkedEntities

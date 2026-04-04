@@ -13,6 +13,10 @@ import {
   createAnalysisPlugin,
   analysisPluginKey,
 } from "@/lib/editor/analysis-decoration-plugin";
+import {
+  createFocusDimmingPlugin,
+  focusDimmingPluginKey,
+} from "@/lib/editor/focus-dimming-plugin";
 import { buildOffsetMap, textRangeToPmRange } from "@/lib/editor/text-extraction";
 import { getMentionItems, createMentionSuggestionRenderer } from "@/components/proyectos/MentionSuggestion";
 import { getMentionEntityUrl } from "@/lib/proyectos/entity-config";
@@ -24,6 +28,12 @@ import { useHoverPreview } from "./useHoverPreview";
 function useAnalysisPlugin() {
   const ref = useRef<ReturnType<typeof createAnalysisPlugin> | null>(null);
   if (!ref.current) ref.current = createAnalysisPlugin();
+  return ref.current;
+}
+
+function useDimmingPlugin() {
+  const ref = useRef<ReturnType<typeof createFocusDimmingPlugin> | null>(null);
+  if (!ref.current) ref.current = createFocusDimmingPlugin();
   return ref.current;
 }
 
@@ -43,6 +53,7 @@ export function SceneEditor({
   const router = useRouter();
   const { escena, save } = useEscena(escenaId);
   const analysisPlugin = useAnalysisPlugin();
+  const dimmingPlugin = useDimmingPlugin();
 
   const setText = useCorrectorStore((s) => s.setText);
   const analyze = useCorrectorStore((s) => s.analyzeWithAutoEnable);
@@ -94,7 +105,7 @@ export function SceneEditor({
     onCreate({ editor }) {
       editor.view.updateState(
         editor.view.state.reconfigure({
-          plugins: [...editor.view.state.plugins, analysisPlugin],
+          plugins: [...editor.view.state.plugins, analysisPlugin, dimmingPlugin],
         })
       );
     },
@@ -160,6 +171,13 @@ export function SceneEditor({
     }
     editor.view.dispatch(tr);
   }, [editor, issues, focusedCategory, correctorEnabled]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const tr = editor.view.state.tr;
+    tr.setMeta(focusDimmingPluginKey, { enabled: focusMode });
+    editor.view.dispatch(tr);
+  }, [editor, focusMode]);
 
 
   const navigateToIssue = useCallback(
@@ -267,6 +285,10 @@ export function SceneEditor({
           pointer-events: none;
           height: 0;
           font-style: italic;
+        }
+        .manuscrito-editor .dimmed-paragraph {
+          opacity: 0.15;
+          transition: opacity 0.2s ease;
         }
       `}</style>
 

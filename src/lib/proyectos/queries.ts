@@ -19,6 +19,11 @@ import type {
   EscenaPersonaje,
   EscenaEvento,
   ManuscritoCarpeta, ManuscritoCarpetaInsert, ManuscritoCarpetaUpdate,
+  EscenaVersion, EscenaVersionInsert,
+  EscenaTarea, EscenaTareaInsert, EscenaTareaUpdate,
+  Idea, IdeaInsert, IdeaUpdate,
+  EscenaIdea,
+  LugarRuta, LugarRutaInsert, LugarRutaUpdate,
 } from "@/types/proyectos";
 
 // ── Helpers ───────────────────────────────────────────────
@@ -540,4 +545,95 @@ export async function deleteManuscritoCarpeta(sb: SupabaseClient, id: string): P
 export async function fetchGeneralsBatch(sb: SupabaseClient, proyectoIds: string[]): Promise<General[]> {
   if (proyectoIds.length === 0) return [];
   return unwrap(await sb.from("general").select("*").in("proyecto_id", proyectoIds));
+}
+
+// ── Escena Versiones ──────────────────────────────────────
+
+export async function fetchEscenaVersiones(sb: SupabaseClient, escenaId: string): Promise<EscenaVersion[]> {
+  return unwrap(await sb.from("escena_versiones").select("*").eq("escena_id", escenaId).order("created_at", { ascending: false }));
+}
+
+export async function createEscenaVersion(sb: SupabaseClient, escenaId: string, data: EscenaVersionInsert): Promise<EscenaVersion> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("escena_versiones").insert({ ...data, escena_id: escenaId, user_id: userId }).select().single());
+}
+
+export async function deleteEscenaVersion(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("escena_versiones").delete().eq("id", id));
+}
+
+// ── Escena Tareas ─────────────────────────────────────────
+
+export async function fetchEscenaTareas(sb: SupabaseClient, escenaId: string): Promise<EscenaTarea[]> {
+  return unwrap(await sb.from("escena_tareas").select("*").eq("escena_id", escenaId).order("posicion"));
+}
+
+export async function fetchProyectoTareas(sb: SupabaseClient, proyectoId: string): Promise<EscenaTarea[]> {
+  return unwrap(await sb.from("escena_tareas").select("*").eq("proyecto_id", proyectoId).order("posicion"));
+}
+
+export async function createEscenaTarea(sb: SupabaseClient, escenaId: string, proyectoId: string, data: EscenaTareaInsert): Promise<EscenaTarea> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("escena_tareas").insert({ ...data, escena_id: escenaId, proyecto_id: proyectoId, user_id: userId }).select().single());
+}
+
+export async function updateEscenaTarea(sb: SupabaseClient, id: string, data: EscenaTareaUpdate): Promise<EscenaTarea> {
+  return unwrap(await sb.from("escena_tareas").update(data).eq("id", id).select().single());
+}
+
+export async function deleteEscenaTarea(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("escena_tareas").delete().eq("id", id));
+}
+
+// ── Ideas ─────────────────────────────────────────────────
+
+export async function fetchIdeas(sb: SupabaseClient, proyectoId: string): Promise<Idea[]> {
+  return unwrap(await sb.from("ideas").select("*").eq("proyecto_id", proyectoId).order("created_at", { ascending: false }));
+}
+
+export async function createIdea(sb: SupabaseClient, proyectoId: string, data: IdeaInsert): Promise<Idea> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("ideas").insert({ ...data, proyecto_id: proyectoId, user_id: userId }).select().single());
+}
+
+export async function updateIdea(sb: SupabaseClient, id: string, data: IdeaUpdate): Promise<Idea> {
+  return unwrap(await sb.from("ideas").update(data).eq("id", id).select().single());
+}
+
+export async function deleteIdea(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("ideas").delete().eq("id", id));
+}
+
+// ── Escena Ideas (junction) ──────────────────────────────
+
+export async function fetchEscenaIdeas(sb: SupabaseClient, escenaId: string): Promise<EscenaIdea[]> {
+  return unwrap(await sb.from("escena_ideas").select("*").eq("escena_id", escenaId));
+}
+
+export async function addEscenaIdea(sb: SupabaseClient, escenaId: string, ideaId: string): Promise<EscenaIdea> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("escena_ideas").insert({ escena_id: escenaId, idea_id: ideaId, user_id: userId }).select().single());
+}
+
+export async function removeEscenaIdea(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("escena_ideas").delete().eq("id", id));
+}
+
+// ── Lugar Rutas ───────────────────────────────────────────
+
+export async function fetchLugarRutas(sb: SupabaseClient, lugarId: string): Promise<LugarRuta[]> {
+  return unwrap(await sb.from("lugar_rutas").select("*").eq("lugar_id", lugarId).order("posicion"));
+}
+
+export async function createLugarRuta(sb: SupabaseClient, proyectoId: string, lugarId: string, data: LugarRutaInsert): Promise<LugarRuta> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("lugar_rutas").insert({ ...data, proyecto_id: proyectoId, lugar_id: lugarId, personaje_id: data.personaje_id, user_id: userId }).select().single());
+}
+
+export async function updateLugarRuta(sb: SupabaseClient, id: string, data: LugarRutaUpdate): Promise<LugarRuta> {
+  return unwrap(await sb.from("lugar_rutas").update(data).eq("id", id).select().single());
+}
+
+export async function deleteLugarRuta(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("lugar_rutas").delete().eq("id", id));
 }

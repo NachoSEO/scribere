@@ -3,7 +3,7 @@
 import { use, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useArco, useArcos, useHitos, useArcoPersonajes, usePersonajes } from "@/lib/proyectos/hooks";
-import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
+import { FormField } from "@/components/proyectos/FormField";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { TIPO_RESOLUCION_OPTIONS } from "@/types/proyectos";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
@@ -11,12 +11,8 @@ import { LinkedEntities } from "@/components/proyectos/LinkedEntities";
 import { EntityPreviewPanel } from "@/components/proyectos/EntityPreviewPanel";
 import type { MentionType } from "@/lib/proyectos/entity-config";
 
-const fields: FieldConfig[] = [
-  { key: "nombre", label: "Nombre", placeholder: "Nombre del arco narrativo" },
-  { key: "planteamiento", label: "Intención", multiline: true, rows: 3, placeholder: "Cómo el personaje planea lograr su objetivo a corto plazo..." },
-  { key: "nudo", label: "Obstáculo", multiline: true, rows: 3, placeholder: "Qué barreras se interponen..." },
-  { key: "desenlace", label: "Resolución", multiline: true, rows: 3, placeholder: "El resultado y la nueva información revelada..." },
-];
+const selectClasses =
+  "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors";
 
 export default function ArcoDetailPage({
   params,
@@ -55,16 +51,6 @@ export default function ArcoDetailPage({
     return [...new Set(ids)];
   }, [arco, hitos]);
 
-  const values = useMemo((): Record<string, string> => {
-    if (!arco) return {};
-    return {
-      nombre: arco.nombre,
-      planteamiento: arco.planteamiento,
-      nudo: arco.nudo,
-      desenlace: arco.desenlace,
-    };
-  }, [arco]);
-
   const handleChange = useCallback((key: string, value: string) => {
     save({ [key]: value });
   }, [save]);
@@ -91,14 +77,57 @@ export default function ArcoDetailPage({
       </div>
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
-      <div className="mt-6 space-y-6">
-        <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
+      <div className="mt-5 space-y-4">
+        {/* Nombre — full width */}
+        <FormField
+          label="Nombre"
+          value={arco.nombre ?? ""}
+          onChange={(v) => handleChange("nombre", v)}
+          placeholder="Nombre del arco narrativo"
+          projectId={projectId}
+        />
 
-        {/* Tipo resolución (YBNA) */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Tipo de resolución
-          </label>
+        {/* Estructura narrativa card — 3-column grid */}
+        <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+          <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-2">
+            Estructura narrativa
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              label="Intención"
+              value={arco.planteamiento ?? ""}
+              onChange={(v) => handleChange("planteamiento", v)}
+              multiline
+              rows={3}
+              placeholder="Cómo el personaje planea lograr su objetivo a corto plazo..."
+              projectId={projectId}
+            />
+            <FormField
+              label="Obstáculo"
+              value={arco.nudo ?? ""}
+              onChange={(v) => handleChange("nudo", v)}
+              multiline
+              rows={3}
+              placeholder="Qué barreras se interponen..."
+              projectId={projectId}
+            />
+            <FormField
+              label="Resolución"
+              value={arco.desenlace ?? ""}
+              onChange={(v) => handleChange("desenlace", v)}
+              multiline
+              rows={3}
+              placeholder="El resultado y la nueva información revelada..."
+              projectId={projectId}
+            />
+          </div>
+        </div>
+
+        {/* Resolución card — YBNA pill buttons */}
+        <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+          <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-3">
+            Resolución
+          </h2>
           <div className="flex flex-wrap gap-2">
             {TIPO_RESOLUCION_OPTIONS.map((opt) => (
               <button
@@ -117,49 +146,58 @@ export default function ArcoDetailPage({
           </div>
         </div>
 
-        {/* Hito origen */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Hito de origen
-          </label>
-          <select
-            value={arco.hito_origen_id ?? ""}
-            onChange={(e) => save({ hito_origen_id: e.target.value || null })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin hito de origen</option>
-            {hitos.map((h) => (
-              <option key={h.id} value={h.id}>{h.hito || "Sin nombre"}</option>
-            ))}
-          </select>
-        </div>
+        {/* Hitos + Personajes — 2-column grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Hitos card */}
+          <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-3">
+              Hitos
+            </h2>
+            <div className="space-y-2.5">
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Hito de origen</label>
+                <select
+                  value={arco.hito_origen_id ?? ""}
+                  onChange={(e) => save({ hito_origen_id: e.target.value || null })}
+                  className={selectClasses}
+                >
+                  <option value="">Sin hito de origen</option>
+                  {hitos.map((h) => (
+                    <option key={h.id} value={h.id}>{h.hito || "Sin nombre"}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Hito de destino</label>
+                <select
+                  value={arco.hito_destino_id ?? ""}
+                  onChange={(e) => save({ hito_destino_id: e.target.value || null })}
+                  className={selectClasses}
+                >
+                  <option value="">Sin hito de destino</option>
+                  {hitos.map((h) => (
+                    <option key={h.id} value={h.id}>{h.hito || "Sin nombre"}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
 
-        {/* Hito destino */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Hito de destino
-          </label>
-          <select
-            value={arco.hito_destino_id ?? ""}
-            onChange={(e) => save({ hito_destino_id: e.target.value || null })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin hito de destino</option>
-            {hitos.map((h) => (
-              <option key={h.id} value={h.id}>{h.hito || "Sin nombre"}</option>
-            ))}
-          </select>
+          {/* Personajes card */}
+          <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-2">
+              Personajes
+            </h2>
+            <JunctionSelector
+              label="Personajes involucrados"
+              linkedIds={personajeIds}
+              options={personajes}
+              onAdd={apLinks.add}
+              onRemove={apLinks.remove}
+              junctionMap={personajeJunctionMap}
+            />
+          </div>
         </div>
-
-        {/* Personajes */}
-        <JunctionSelector
-          label="Personajes involucrados"
-          linkedIds={personajeIds}
-          options={personajes}
-          onAdd={apLinks.add}
-          onRemove={apLinks.remove}
-          junctionMap={personajeJunctionMap}
-        />
 
         {/* Linked entities summary */}
         <LinkedEntities

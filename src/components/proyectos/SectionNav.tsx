@@ -34,6 +34,7 @@ const sectionGroups: SectionGroup[] = [
     header: "Escritura",
     items: [
       { href: "manuscrito", label: "Manuscrito" },
+      { href: "tareas", label: "Tareas" },
     ],
   },
 ];

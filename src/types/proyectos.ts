@@ -213,15 +213,26 @@ export type ArcoInsert = Pick<Arco, "nombre"> & Partial<Omit<Arco, keyof BaseEnt
 export type ArcoUpdate = Partial<Omit<Arco, keyof BaseEntity | "proyecto_id">>;
 
 // ── Escena ───────────────────────────────────────────────
+export type EscenaEstado = 'primer_borrador' | 'segundo_borrador' | 'tercer_borrador' | 'version_final';
+
+export const ESCENA_ESTADO_OPTIONS: { value: EscenaEstado; label: string; color: string }[] = [
+  { value: 'primer_borrador',   label: '1er borrador',    color: '#9e9590' },
+  { value: 'segundo_borrador',  label: '2do borrador',    color: '#55699b' },
+  { value: 'tercer_borrador',   label: '3er borrador',    color: '#93709e' },
+  { value: 'version_final',     label: 'Versión final',   color: '#78a064' },
+];
+
 export interface Escena extends BaseEntity {
   proyecto_id: string;
   hito_id: string | null;
   arco_id: string | null;
   lugar_id: string | null;
   carpeta_id: string | null;
+  pov_personaje_id: string | null;
   resumen: string;
   objetivo: string;
   contenido: Record<string, unknown> | null;
+  estado: EscenaEstado;
   posicion: number;
 }
 
@@ -293,3 +304,77 @@ export const LUGAR_TIPOS: { value: LugarTipo; label: string }[] = [
   { value: "edificio", label: "Edificio" },
   { value: "otro", label: "Otro" },
 ];
+
+// ── Escena Versiones ────────────────────────────────────────
+export interface EscenaVersion {
+  id: string;
+  user_id: string;
+  escena_id: string;
+  contenido: Record<string, unknown> | null;
+  nombre: string;
+  created_at: string;
+}
+
+export type EscenaVersionInsert = Pick<EscenaVersion, "nombre"> & { contenido?: Record<string, unknown> | null };
+
+// ── Escena Tareas ───────────────────────────────────────────
+export type TareaEstado = 'pendiente' | 'en_progreso' | 'completada';
+
+export interface EscenaTarea {
+  id: string;
+  user_id: string;
+  escena_id: string;
+  proyecto_id: string;
+  titulo: string;
+  descripcion: string;
+  estado: TareaEstado;
+  posicion: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type EscenaTareaInsert = Pick<EscenaTarea, "titulo"> & Partial<Pick<EscenaTarea, "descripcion" | "estado" | "posicion">>;
+export type EscenaTareaUpdate = Partial<Pick<EscenaTarea, "titulo" | "descripcion" | "estado" | "posicion">>;
+
+// ── Ideas ───────────────────────────────────────────────────
+export interface Idea {
+  id: string;
+  user_id: string;
+  proyecto_id: string;
+  titulo: string;
+  descripcion: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type IdeaInsert = Pick<Idea, "titulo"> & Partial<Pick<Idea, "descripcion">>;
+export type IdeaUpdate = Partial<Pick<Idea, "titulo" | "descripcion">>;
+
+export interface EscenaIdea extends JunctionRecord {
+  escena_id: string;
+  idea_id: string;
+}
+
+// ── Lugar Rutas (character routes on map) ───────────────────
+export interface RutaPunto {
+  x: number;
+  y: number;
+  lugar_id?: string;
+}
+
+export interface LugarRuta {
+  id: string;
+  user_id: string;
+  proyecto_id: string;
+  lugar_id: string;
+  personaje_id: string;
+  nombre: string;
+  color: string;
+  puntos: RutaPunto[];
+  posicion: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type LugarRutaInsert = Pick<LugarRuta, "personaje_id"> & Partial<Pick<LugarRuta, "nombre" | "color" | "puntos">>;
+export type LugarRutaUpdate = Partial<Pick<LugarRuta, "nombre" | "color" | "puntos" | "posicion">>;

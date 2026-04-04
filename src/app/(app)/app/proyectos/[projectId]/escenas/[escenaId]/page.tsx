@@ -6,7 +6,7 @@ import {
   useEscena, useEscenas, useHitos, useArcos, useLugares, usePersonajes,
   useEscenaPersonajes,
 } from "@/lib/proyectos/hooks";
-import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
+import { FormField } from "@/components/proyectos/FormField";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
 import { EscenaEditor } from "@/components/proyectos/EscenaEditor";
@@ -15,10 +15,8 @@ import { EntityPreviewPanel } from "@/components/proyectos/EntityPreviewPanel";
 import type { MentionType } from "@/lib/proyectos/entity-config";
 import { useDebouncedSave } from "@/lib/hooks/use-debounced-save";
 
-const fields: FieldConfig[] = [
-  { key: "resumen", label: "Resumen", placeholder: "Resumen breve de la escena" },
-  { key: "objetivo", label: "Objetivo", multiline: true, rows: 2, placeholder: "Qué debe lograr esta escena..." },
-];
+const selectClasses =
+  "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors";
 
 export default function EscenaDetailPage({
   params,
@@ -36,11 +34,6 @@ export default function EscenaDetailPage({
   const epLinks = useEscenaPersonajes(escenaId);
   const [showDelete, setShowDelete] = useState(false);
   const [previewEntity, setPreviewEntity] = useState<{ id: string; type: MentionType } | null>(null);
-
-  const values = useMemo((): Record<string, string> => {
-    if (!escena) return {};
-    return { resumen: escena.resumen, objetivo: escena.objetivo };
-  }, [escena]);
 
   const handleChange = useCallback((key: string, value: string) => {
     save({ [key]: value });
@@ -69,7 +62,7 @@ export default function EscenaDetailPage({
     return map;
   }, [epLinks.links]);
 
-  // Hito items for junction (using hito field as nombre)
+  // Hito items for display (using hito field as nombre)
   const hitoItems = useMemo(() => hitos.map((h) => ({ id: h.id, nombre: h.hito })), [hitos]);
 
   if (!escena) return <div className="p-6 text-sm text-[var(--color-ink-muted)]">Cargando...</div>;
@@ -89,67 +82,91 @@ export default function EscenaDetailPage({
       </div>
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
-      <div className="mt-6 space-y-6">
-        <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
-
-        {/* FK selectors */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Hito
-          </label>
-          <select
-            value={escena.hito_id ?? ""}
-            onChange={(e) => save({ hito_id: e.target.value || null })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin hito</option>
-            {hitoItems.map((h) => (
-              <option key={h.id} value={h.id}>{h.nombre || "Sin nombre"}</option>
-            ))}
-          </select>
+      <div className="mt-5 space-y-4">
+        {/* Resumen + Objetivo — 2-column grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            label="Resumen"
+            value={escena.resumen ?? ""}
+            onChange={(v) => handleChange("resumen", v)}
+            placeholder="Resumen breve de la escena"
+            projectId={projectId}
+          />
+          <FormField
+            label="Objetivo"
+            value={escena.objetivo ?? ""}
+            onChange={(v) => handleChange("objetivo", v)}
+            multiline
+            rows={2}
+            placeholder="Qué debe lograr esta escena..."
+            projectId={projectId}
+          />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Arco
-          </label>
-          <select
-            value={escena.arco_id ?? ""}
-            onChange={(e) => save({ arco_id: e.target.value || null })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin arco</option>
-            {arcos.map((a) => (
-              <option key={a.id} value={a.id}>{a.nombre || "Sin nombre"}</option>
-            ))}
-          </select>
+        {/* Contexto card */}
+        <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+          <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-3">
+            Contexto
+          </h2>
+          <div className="space-y-2.5">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Hito</label>
+                <select
+                  value={escena.hito_id ?? ""}
+                  onChange={(e) => save({ hito_id: e.target.value || null })}
+                  className={selectClasses}
+                >
+                  <option value="">Sin hito</option>
+                  {hitoItems.map((h) => (
+                    <option key={h.id} value={h.id}>{h.nombre || "Sin nombre"}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Arco</label>
+                <select
+                  value={escena.arco_id ?? ""}
+                  onChange={(e) => save({ arco_id: e.target.value || null })}
+                  className={selectClasses}
+                >
+                  <option value="">Sin arco</option>
+                  {arcos.map((a) => (
+                    <option key={a.id} value={a.id}>{a.nombre || "Sin nombre"}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Lugar</label>
+              <select
+                value={escena.lugar_id ?? ""}
+                onChange={(e) => save({ lugar_id: e.target.value || null })}
+                className={selectClasses}
+              >
+                <option value="">Sin lugar</option>
+                {lugares.map((l) => (
+                  <option key={l.id} value={l.id}>{l.nombre || "Sin nombre"}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
-            Lugar
-          </label>
-          <select
-            value={escena.lugar_id ?? ""}
-            onChange={(e) => save({ lugar_id: e.target.value || null })}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin lugar</option>
-            {lugares.map((l) => (
-              <option key={l.id} value={l.id}>{l.nombre || "Sin nombre"}</option>
-            ))}
-          </select>
+        {/* Personajes card */}
+        <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+          <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-2">
+            Personajes
+          </h2>
+          <JunctionSelector
+            label="Personajes en la escena"
+            linkedIds={personajeIds}
+            options={personajes}
+            onAdd={epLinks.add}
+            onRemove={epLinks.remove}
+            junctionMap={personajeJunctionMap}
+          />
         </div>
-
-        {/* Junction selector */}
-        <JunctionSelector
-          label="Personajes en la escena"
-          linkedIds={personajeIds}
-          options={personajes}
-          onAdd={epLinks.add}
-          onRemove={epLinks.remove}
-          junctionMap={personajeJunctionMap}
-        />
 
         {/* Linked entities summary */}
         <LinkedEntities
@@ -160,7 +177,7 @@ export default function EscenaDetailPage({
           onEntityClick={(id, type) => setPreviewEntity({ id, type: type as MentionType })}
         />
 
-        {/* Tiptap editor */}
+        {/* Tiptap editor — full width */}
         <EscenaEditor
           content={escena.contenido}
           onChange={debouncedContentChange}

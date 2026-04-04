@@ -1,13 +1,14 @@
 "use client";
 
 import { use, useState, useCallback, useEffect } from "react";
-import { useFases, useHitos, useArcos, useEscenas, useManuscritoCarpetas } from "@/lib/proyectos/hooks";
+import { useEscenas, useManuscritoCarpetas } from "@/lib/proyectos/hooks";
 import { useFocusModeStore } from "@/lib/manuscrito/focus-mode-store";
 import { StatsBar } from "@/components/corrector/StatsBar";
 import { FileTree } from "@/components/manuscrito/FileTree";
 import { SceneEditor } from "@/components/manuscrito/SceneEditor";
 import { SceneSidebar } from "@/components/manuscrito/SceneSidebar";
 import { CleanPreview } from "@/components/manuscrito/CleanPreview";
+import { CompileView } from "@/components/manuscrito/CompileView";
 
 function CorrectorIcon({ active }: { active: boolean }) {
   return (
@@ -48,7 +49,7 @@ function EmptyState() {
   );
 }
 
-type ViewMode = "editor" | "preview";
+type ViewMode = "editor" | "preview" | "compile";
 
 export default function ManuscritoPage({
   params,
@@ -57,9 +58,6 @@ export default function ManuscritoPage({
 }) {
   const { projectId } = use(params);
 
-  const { fases } = useFases(projectId);
-  const { hitos } = useHitos(projectId);
-  const { arcos } = useArcos(projectId);
   const { escenas, create: createEscena, remove: removeEscena } = useEscenas(projectId);
   const { carpetas, create: createCarpeta, update: updateCarpeta, remove: removeCarpeta } = useManuscritoCarpetas(projectId);
 
@@ -74,7 +72,8 @@ export default function ManuscritoPage({
   const toggleTypewriterScroll = useFocusModeStore((s) => s.toggleTypewriterScroll);
 
   const isPreview = viewMode === "preview";
-  const effectiveCorrectorEnabled = correctorEnabled && !focusMode && !isPreview;
+  const isCompile = viewMode === "compile";
+  const effectiveCorrectorEnabled = correctorEnabled && !focusMode && !isPreview && !isCompile;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -96,11 +95,10 @@ export default function ManuscritoPage({
   }, []);
 
   const handleCreateEscena = useCallback(
-    async (nombre: string, hitoId: string | null, carpetaId?: string | null) => {
+    async (nombre: string, carpetaId: string | null) => {
       const newEscena = await createEscena({
         resumen: nombre,
-        hito_id: hitoId,
-        carpeta_id: carpetaId ?? null,
+        carpeta_id: carpetaId,
         posicion: escenas.length,
       });
       setSelectedEscenaId(newEscena.id);
@@ -183,9 +181,6 @@ export default function ManuscritoPage({
   return (
     <div className="flex h-full w-full overflow-hidden" style={{ minHeight: 0 }}>
       <FileTree
-        fases={fases}
-        hitos={hitos}
-        arcos={arcos}
         escenas={escenas}
         carpetas={carpetas}
         selectedId={selectedEscenaId}
@@ -206,30 +201,27 @@ export default function ManuscritoPage({
                 : "Manuscrito"}
             </div>
 
-            {selectedEscenaId && (
-              <div className="flex rounded-md border border-[var(--color-border)] overflow-hidden shrink-0">
-                <button
-                  onClick={() => setViewMode("editor")}
-                  className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
-                    !isPreview
-                      ? "bg-[var(--color-accent)] text-white"
-                      : "bg-[var(--color-cream)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink-light)]"
-                  }`}
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => setViewMode("preview")}
-                  className={`px-2.5 py-1 text-[10px] font-medium transition-colors border-l border-[var(--color-border)] ${
-                    isPreview
-                      ? "bg-[var(--color-accent)] text-white"
-                      : "bg-[var(--color-cream)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink-light)]"
-                  }`}
-                >
-                  Vista previa
-                </button>
-              </div>
-            )}
+            <div className="flex rounded-md border border-[var(--color-border)] overflow-hidden shrink-0">
+              {(["editor", "preview", "compile"] as const).map((mode, i) => {
+                const labels = { editor: "Editar", preview: "Vista previa", compile: "Compilar" };
+                const isActive = viewMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                      i > 0 ? "border-l border-[var(--color-border)]" : ""
+                    } ${
+                      isActive
+                        ? "bg-[var(--color-accent)] text-white"
+                        : "bg-[var(--color-cream)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink-light)]"
+                    }`}
+                  >
+                    {labels[mode]}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -263,7 +255,9 @@ export default function ManuscritoPage({
         {effectiveCorrectorEnabled && <StatsBar />}
 
         <div className="flex flex-1 min-h-0 overflow-hidden">
-          {selectedEscenaId ? (
+          {isCompile ? (
+            <CompileView projectId={projectId} carpetas={carpetas} />
+          ) : selectedEscenaId ? (
             isPreview ? (
               <CleanPreview escenaId={selectedEscenaId} />
             ) : (
@@ -281,7 +275,7 @@ export default function ManuscritoPage({
         </div>
       </div>
 
-      {selectedEscenaId && (
+      {selectedEscenaId && !isCompile && (
         <SceneSidebar
           key={selectedEscenaId}
           escenaId={selectedEscenaId}

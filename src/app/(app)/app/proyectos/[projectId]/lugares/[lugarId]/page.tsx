@@ -3,13 +3,14 @@
 import { use, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useLugar, useLugares, useLugarMapa, useEscenas } from "@/lib/proyectos/hooks";
+import { useLugar, useLugares, useLugarMapa, useLugarRutas, useEscenas } from "@/lib/proyectos/hooks";
 import { useProyectosStore } from "@/lib/proyectos/store";
 import { updateLugar as updateLugarQuery } from "@/lib/proyectos/queries";
 import { createClient } from "@/lib/supabase/client";
 import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { MapaPins } from "@/components/proyectos/MapaPins";
+import { RouteManager } from "@/components/proyectos/RouteManager";
 import { LUGAR_TIPOS } from "@/types/proyectos";
 import type { LugarTipo, LugarPin } from "@/types/proyectos";
 
@@ -46,8 +47,10 @@ export default function LugarDetailPage({
   const { lugares, remove, create: createLugar } = useLugares(projectId);
   const { uploadMapa, removeMapa, savePins } = useLugarMapa(lugarId);
   const { escenas } = useEscenas(projectId);
+  const { rutas, update: updateRuta } = useLugarRutas(lugarId);
   const [showDelete, setShowDelete] = useState(false);
   const [uploadingMapa, setUploadingMapa] = useState(false);
+  const [editingRouteId, setEditingRouteId] = useState<string | null>(null);
 
   // Escenas set in this lugar
   const escenasDelLugar = useMemo(
@@ -180,6 +183,18 @@ export default function LugarDetailPage({
     }
     save({ es_mapa_principal: !lugar?.es_mapa_principal });
   }, [lugar?.es_mapa_principal, lugares, lugarId, save, updateLugarInList]);
+
+  const handleRouteMapClick = useCallback(
+    async (x: number, y: number) => {
+      if (!editingRouteId) return;
+      const ruta = rutas.find((r) => r.id === editingRouteId);
+      if (!ruta) return;
+      await updateRuta(editingRouteId, {
+        puntos: [...ruta.puntos, { x, y }],
+      });
+    },
+    [editingRouteId, rutas, updateRuta]
+  );
 
   const handleCreateSublugar = useCallback(async () => {
     const newLugar = await createLugar({ nombre: "Nuevo sublugar", lugar_padre_id: lugarId });
@@ -317,6 +332,9 @@ export default function LugarDetailPage({
           onUpload={handleUploadMapa}
           onRemoveMap={removeMapa}
           uploading={uploadingMapa}
+          rutas={rutas}
+          onMapClick={handleRouteMapClick}
+          isPlacingRoutePoint={!!editingRouteId}
         />
 
         {/* Mapa principal toggle */}
@@ -333,6 +351,16 @@ export default function LugarDetailPage({
               {lugar.es_mapa_principal ? "★ Mapa principal" : "Marcar como mapa principal"}
             </button>
           </div>
+        )}
+
+        {/* Routes */}
+        {lugar.mapa_url && (
+          <RouteManager
+            lugarId={lugarId}
+            projectId={projectId}
+            editingRouteId={editingRouteId}
+            onEditRoute={setEditingRouteId}
+          />
         )}
 
         {/* Children */}

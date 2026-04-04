@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import tippy from "tippy.js";
 import type { Instance as TippyInstance } from "tippy.js";
-import type { LugarPin } from "@/types/proyectos";
+import type { LugarPin, LugarRuta } from "@/types/proyectos";
 
 export interface LugarPreviewData {
   id: string;
@@ -24,6 +24,12 @@ interface MapaPinsProps {
   onUpload: (file: File) => Promise<void>;
   onRemoveMap: () => void;
   uploading?: boolean;
+  /** Routes to render as polylines on the map */
+  rutas?: LugarRuta[];
+  /** External click handler (used by RouteManager for placing route points) */
+  onMapClick?: (x: number, y: number) => void;
+  /** When true, the cursor shows crosshair for route point placement */
+  isPlacingRoutePoint?: boolean;
 }
 
 const TIPO_LABELS: Record<string, string> = {
@@ -63,6 +69,9 @@ export function MapaPins({
   onUpload,
   onRemoveMap,
   uploading,
+  rutas,
+  onMapClick,
+  isPlacingRoutePoint,
 }: MapaPinsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -123,17 +132,23 @@ export function MapaPins({
 
   const handleMapClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!placingPin || !selectedLugarId) return;
-
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      const x = Math.round(((e.clientX - rect.left) / rect.width) * 10000) / 100;
+      const y = Math.round(((e.clientY - rect.top) / rect.height) * 10000) / 100;
+
+      // Route point placement takes priority
+      if (onMapClick && isPlacingRoutePoint) {
+        onMapClick(x, y);
+        return;
+      }
+
+      if (!placingPin || !selectedLugarId) return;
 
       const newPin: LugarPin = {
-        x: Math.round(x * 100) / 100,
-        y: Math.round(y * 100) / 100,
+        x,
+        y,
         lugar_id: selectedLugarId,
       };
 
@@ -141,7 +156,7 @@ export function MapaPins({
       setPlacingPin(false);
       setSelectedLugarId("");
     },
-    [placingPin, selectedLugarId, pins, onPinsChange]
+    [placingPin, selectedLugarId, pins, onPinsChange, onMapClick, isPlacingRoutePoint]
   );
 
   const removePin = useCallback(
@@ -286,7 +301,7 @@ export function MapaPins({
         ref={containerRef}
         onClick={handleMapClick}
         className={`relative rounded-lg overflow-hidden border border-[var(--color-border)] ${
-          placingPin && selectedLugarId ? "cursor-crosshair" : ""
+          (placingPin && selectedLugarId) || isPlacingRoutePoint ? "cursor-crosshair" : ""
         }`}
       >
         <img
@@ -295,6 +310,61 @@ export function MapaPins({
           className="w-full h-auto block"
           draggable={false}
         />
+
+        {/* Route polylines */}
+        {rutas && rutas.length > 0 && (
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            {rutas.map((ruta) => {
+              if (ruta.puntos.length < 2) return null;
+              const points = ruta.puntos
+                .map((p) => `${p.x},${p.y}`)
+                .join(" ");
+              return (
+                <polyline
+                  key={ruta.id}
+                  points={points}
+                  fill="none"
+                  stroke={ruta.color}
+                  strokeWidth="0.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity={0.8}
+                />
+              );
+            })}
+          </svg>
+        )}
+
+        {/* Route point dots */}
+        {rutas?.map((ruta) =>
+          ruta.puntos.map((punto, idx) => (
+            <div
+              key={`${ruta.id}-${idx}`}
+              className="absolute pointer-events-none flex items-center justify-center"
+              style={{
+                left: `${punto.x}%`,
+                top: `${punto.y}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <div
+                className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-white border border-white/50"
+                style={{
+                  backgroundColor: ruta.color,
+                  fontSize: "7px",
+                  fontWeight: 600,
+                  lineHeight: 1,
+                }}
+              >
+                {idx + 1}
+              </div>
+            </div>
+          ))
+        )}
 
         {pins.map((pin) => (
           <div
