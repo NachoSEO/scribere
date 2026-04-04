@@ -33,6 +33,15 @@ body {
   color: var(--color-ink);
 }
 
+/* Inside the manuscrito scroll container, the editor must not impose min-height
+   so the container stays fixed and scrolls internally. */
+.manuscrito-scroll .tiptap {
+  min-height: 100%;
+}
+.manuscrito-scroll .manuscrito-editor {
+  min-height: 100%;
+}
+
 .tiptap p {
   margin-bottom: 0.75rem;
 }
@@ -79,6 +88,41 @@ body {
   font-weight: 600;
 }
 
+/* @ Mention pills in TipTap */
+.mention {
+  border-radius: 9999px;
+  padding: 1px 7px;
+  font-size: 0.85em;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mention[data-mention-type="personaje"] {
+  background-color: rgba(139, 111, 71, 0.12);
+  color: #8b6f47;
+  border: 1px solid rgba(139, 111, 71, 0.25);
+}
+
+.mention[data-mention-type="lugar"] {
+  background-color: rgba(88, 155, 155, 0.12);
+  color: #3d7a7a;
+  border: 1px solid rgba(88, 155, 155, 0.25);
+}
+
+.mention[data-mention-type="faccion"] {
+  background-color: rgba(147, 112, 158, 0.12);
+  color: #6d4f78;
+  border: 1px solid rgba(147, 112, 158, 0.25);
+}
+
+.mention[data-mention-type="evento"] {
+  background-color: rgba(204, 133, 61, 0.12);
+  color: #9a6020;
+  border: 1px solid rgba(204, 133, 61, 0.25);
+}
+
 /* Scrollbar styling for a polished feel */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -93,3 +137,91 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--color-ink-muted);
 }
+
+/* Mention preview card (hover tooltip) */
+.tippy-box[data-theme~='mention-preview'] {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border: 1px solid var(--color-border);
+  padding: 0;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+.tippy-box[data-theme~='mention-preview'] .tippy-content {
+  padding: 0;
+}
+.tippy-box[data-theme~='mention-preview'] .tippy-arrow {
+  color: white;
+}
+.mention-preview-card {
+  max-width: 320px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Clean preview: book-like typography */
+.clean-preview {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
+  line-height: 2;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 3rem 4rem;
+  color: var(--color-ink);
+}
+.clean-preview p {
+  text-indent: 1.5em;
+  margin-bottom: 0;
+}
+.clean-preview p:first-child,
+.clean-preview h2 + p,
+.clean-preview h3 + p,
+.clean-preview blockquote + p,
+.clean-preview hr + p {
+  text-indent: 0;
+}
+.clean-preview h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 3rem 0 2rem;
+  letter-spacing: 0.04em;
+  font-variant: small-caps;
+  color: var(--color-ink);
+}
+.clean-preview h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 2rem 0 1rem;
+  color: var(--color-ink-light);
+}
+.clean-preview blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 1.5em;
+  margin: 1.5em 0;
+  font-style: italic;
+  color: var(--color-ink-light);
+}
+.clean-preview blockquote p {
+  text-indent: 0;
+}
+.clean-preview hr {
+  border: none;
+  text-align: center;
+  margin: 2.5rem 0;
+}
+.clean-preview hr::after {
+  content: "\2022\00a0\00a0\00a0\2022\00a0\00a0\00a0\2022";
+  color: var(--color-ink-muted);
+  letter-spacing: 0.3em;
+  font-size: 0.9rem;
+}
+.clean-preview ul,
+.clean-preview ol {
+  padding-left: 2em;
+  margin: 1em 0;
+}
+.clean-preview li {
+  text-indent: 0;
+}
+

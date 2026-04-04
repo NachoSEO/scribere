@@ -7,9 +7,10 @@ interface EntityBadgeProps {
   href?: string;
   color?: string;
   onRemove?: () => void;
+  onClick?: () => void;
 }
 
-export function EntityBadge({ nombre, href, color, onRemove }: EntityBadgeProps) {
+export function EntityBadge({ nombre, href, color, onRemove, onClick }: EntityBadgeProps) {
   const borderColor = color || "var(--color-accent-light)";
 
   const pill = (
@@ -40,6 +41,14 @@ export function EntityBadge({ nombre, href, color, onRemove }: EntityBadgeProps)
       <Link href={href} className="hover:opacity-80 transition-opacity">
         {pill}
       </Link>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="hover:opacity-80 transition-opacity">
+        {pill}
+      </button>
     );
   }
 

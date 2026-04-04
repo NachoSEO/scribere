@@ -81,6 +81,7 @@ export interface Personaje extends BaseEntity {
   faccion_id: string | null;
   nombre: string;
   imagen_url: string;
+  concepto: string;
   funcion_narrativa: string;
   motivacion: string;
   complicacion: string;
@@ -89,6 +90,15 @@ export interface Personaje extends BaseEntity {
   notas: string;
   posicion: number;
 }
+
+export const PERSONAJE_TIPO_OPTIONS = [
+  "Protagonista",
+  "Antagonista",
+  "Secundario",
+  "Figurante",
+  "Mentor",
+  "Catalizador",
+];
 
 export type PersonajeInsert = Pick<Personaje, "nombre"> & Partial<Omit<Personaje, keyof BaseEntity | "proyecto_id" | "nombre">>;
 export type PersonajeUpdate = Partial<Omit<Personaje, keyof BaseEntity | "proyecto_id">>;
@@ -138,6 +148,7 @@ export interface Lugar extends BaseEntity {
   lugar_padre_id: string | null;
   mapa_url: string;
   mapa_pins: LugarPin[];
+  es_mapa_principal: boolean;
   posicion: number;
 }
 
@@ -150,6 +161,9 @@ export interface Evento extends BaseEntity {
   nombre: string;
   cronologia: string;
   descripcion: string;
+  funcion: string;
+  causa_directa: string;
+  consecuencia_directa: string;
 }
 
 export type EventoInsert = Pick<Evento, "nombre"> & Partial<Omit<Evento, keyof BaseEntity | "proyecto_id" | "nombre">>;
@@ -204,11 +218,23 @@ export interface Escena extends BaseEntity {
   hito_id: string | null;
   arco_id: string | null;
   lugar_id: string | null;
+  carpeta_id: string | null;
   resumen: string;
   objetivo: string;
   contenido: Record<string, unknown> | null;
   posicion: number;
 }
+
+// ── Manuscrito Carpeta ──────────────────────────────────────
+export interface ManuscritoCarpeta extends BaseEntity {
+  proyecto_id: string;
+  nombre: string;
+  carpeta_padre_id: string | null;
+  posicion: number;
+}
+
+export type ManuscritoCarpetaInsert = Pick<ManuscritoCarpeta, "nombre"> & Partial<Omit<ManuscritoCarpeta, keyof BaseEntity | "proyecto_id" | "nombre">>;
+export type ManuscritoCarpetaUpdate = Partial<Omit<ManuscritoCarpeta, keyof BaseEntity | "proyecto_id">>;
 
 export type EscenaInsert = Pick<Escena, "resumen"> & Partial<Omit<Escena, keyof BaseEntity | "proyecto_id" | "resumen">>;
 export type EscenaUpdate = Partial<Omit<Escena, keyof BaseEntity | "proyecto_id">>;
@@ -239,9 +265,19 @@ export interface HitoEvento extends JunctionRecord {
   evento_id: string;
 }
 
+export interface ArcoPersonaje extends JunctionRecord {
+  arco_id: string;
+  personaje_id: string;
+}
+
 export interface EscenaPersonaje extends JunctionRecord {
   escena_id: string;
   personaje_id: string;
+}
+
+export interface EscenaEvento extends JunctionRecord {
+  escena_id: string;
+  evento_id: string;
 }
 
 // ── Entity metadata for generic components ────────────────

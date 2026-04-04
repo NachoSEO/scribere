@@ -5,24 +5,37 @@ import { InternalLinkBanner } from "@/components/marketing/InternalLinkBanner";
 import { FAQSection } from "@/components/marketing/FAQSection";
 
 export const metadata: Metadata = {
-  title: "Fases - Scritura | Herramienta para escritores",
+  title: "Fases y actos narrativos - Scritura | Planificador",
   description:
-    "Divide tu novela en actos y fases con hitos anidados. La estructura macro que convierte una idea en una historia con ritmo y proposito.",
+    "Divide tu novela en actos y fases con hitos tipados y coloreados. La estructura macro que convierte una idea en una historia con ritmo y proposito.",
 };
 
 function PhaseListMock() {
   const phases = [
     {
-      name: "Acto I: Planteamiento",
-      milestones: ["Mundo ordinario", "Incidente incitador", "Primer punto de giro"],
+      name: "Acto I - El Despertar",
+      hitos: [
+        { name: "La vida en los talleres", dotColor: "bg-stone-400" },
+        { name: "Despertar del don", dotColor: "bg-rose-500" },
+        { name: "La decision de Kael", dotColor: "bg-amber-500" },
+      ],
     },
     {
-      name: "Acto II: Confrontacion",
-      milestones: ["Pruebas y aliados", "Punto medio", "Todo esta perdido"],
+      name: "Acto II - El Viaje",
+      hitos: [
+        { name: "La huida de Sorvara", dotColor: "bg-amber-500" },
+        { name: "Encuentro con los nomadas", dotColor: "bg-stone-400" },
+        { name: "El precio de la resonancia", dotColor: "bg-stone-400" },
+        { name: "La emboscada del puente", dotColor: "bg-stone-400" },
+      ],
     },
     {
-      name: "Acto III: Resolucion",
-      milestones: ["Climax", "Desenlace"],
+      name: "Acto III - La Resonancia Final",
+      hitos: [
+        { name: "El secreto de Aldric", dotColor: "bg-stone-400" },
+        { name: "La eleccion de Lyra", dotColor: "bg-amber-500" },
+        { name: "La Resonancia Final", dotColor: "bg-rose-500" },
+      ],
     },
   ];
 
@@ -35,18 +48,34 @@ function PhaseListMock() {
         >
           <h3 className="mb-3 text-sm font-bold text-[var(--color-ink)]">{phase.name}</h3>
           <div className="space-y-1.5">
-            {phase.milestones.map((milestone) => (
+            {phase.hitos.map((hito) => (
               <div
-                key={milestone}
+                key={hito.name}
                 className="flex items-center gap-2 rounded-lg bg-[var(--color-cream)] px-3 py-2"
               >
-                <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
-                <span className="text-xs text-[var(--color-ink-light)]">{milestone}</span>
+                <div className={`h-2 w-2 shrink-0 rounded-full ${hito.dotColor}`} />
+                <span className="text-xs text-[var(--color-ink-light)]">{hito.name}</span>
               </div>
             ))}
           </div>
         </div>
       ))}
+
+      {/* Color legend */}
+      <div className="flex items-center justify-center gap-4 pt-2">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-stone-400" />
+          <span className="text-[10px] text-[var(--color-ink-muted)]">Normalidad</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-amber-500" />
+          <span className="text-[10px] text-[var(--color-ink-muted)]">Giro</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-rose-500" />
+          <span className="text-[10px] text-[var(--color-ink-muted)]">Incidente</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -66,12 +95,12 @@ export default function FasesPage() {
         subtitle="La estructura de tres actos, el viaje del heroe o tu propio metodo. Las fases te dan la vision macro que tu novela necesita para mantener el ritmo."
       />
 
-      {/* Mock UI */}
+      {/* Phase list */}
       <section className="px-8 pb-20">
         <PhaseListMock />
       </section>
 
-      {/* Por que necesitas esto */}
+      {/* Por que necesitas fases */}
       <section className="border-y border-[var(--color-border)] bg-white px-8 py-20">
         <div className="mx-auto max-w-3xl">
           <h2 className="mb-6 text-center text-2xl font-bold text-[var(--color-ink)]">
@@ -86,11 +115,12 @@ export default function FasesPage() {
             </p>
             <p>
               Las fases resuelven ese problema dividiendo la novela en bloques
-              manejables. Ya sea que uses la estructura clasica de tres actos, el
-              viaje del heroe, la estructura de cuatro actos o tu propio sistema, las
-              fases te permiten ver la historia desde arriba. Dentro de cada fase,
-              los hitos marcan los momentos clave. Asi siempre sabes donde estas en
-              la narrativa.
+              manejables. El Acto I de Lyra establece su vida en los talleres, el
+              despertar de su don y la decision de Kael de protegerla. El Acto II
+              la saca de Sorvara y la enfrenta al mundo. El Acto III la obliga a
+              elegir. Dentro de cada fase, los hitos marcan los momentos clave con
+              colores por tipo: normalidad, giro o incidente. Asi siempre sabes
+              donde estas en la narrativa y que viene despues.
             </p>
           </div>
         </div>
@@ -111,9 +141,9 @@ export default function FasesPage() {
                 Define las fases
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Crea las grandes divisiones de tu novela. Pueden ser tres actos, cinco
-                partes, dos temporadas o lo que necesite tu historia. Tu decides la
-                granularidad.
+                Crea las grandes divisiones de tu novela. Pueden ser tres actos,
+                cinco partes, dos temporadas o lo que necesite tu historia. Tu
+                decides la granularidad.
               </p>
             </div>
             <div className="text-center">
@@ -125,8 +155,9 @@ export default function FasesPage() {
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
                 Dentro de cada fase, coloca los hitos que marcan los puntos de
-                inflexion: el incidente incitador, el punto medio, el climax.
-                Cada hito agrupa escenas relacionadas.
+                inflexion. El despertar del don de Lyra es un incidente. La
+                decision de Kael, un giro. La vida en los talleres, normalidad.
+                Cada tipo tiene su color.
               </p>
             </div>
             <div className="text-center">
@@ -137,9 +168,10 @@ export default function FasesPage() {
                 Visualiza la estructura
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Ve de un vistazo como se distribuyen los hitos y escenas a lo largo
-                de la novela. Detecta si una fase tiene demasiado peso o si otra
-                necesita mas desarrollo.
+                Ve de un vistazo como se distribuyen los hitos a lo largo de la
+                novela. Detecta si un acto tiene demasiado peso, si hay dos giros
+                seguidos sin normalidad entre ellos, o si un incidente cae
+                demasiado pronto.
               </p>
             </div>
           </div>
@@ -160,9 +192,9 @@ export default function FasesPage() {
             href: "/planificador/arcos-narrativos",
           },
           {
-            title: "Escenas",
-            description: "Rellena cada hito con las escenas concretas que lo componen.",
-            href: "/planificador/escenas",
+            title: "Estructura",
+            description: "Ve tus fases en la columna vertebral de tu novela junto a hitos, arcos y escenas.",
+            href: "/planificador/estructura",
           },
         ]}
       />
@@ -175,21 +207,21 @@ export default function FasesPage() {
               "No. Las fases son completamente flexibles. Puedes crear dos, tres, cinco o las que quieras. El sistema se adapta a tu metodo, no al reves.",
           },
           {
-            question: "Puedo reorganizar las fases despues de crearlas?",
+            question: "Que significan los colores de los hitos?",
             answer:
-              "Si. Puedes cambiar el orden de las fases, mover hitos entre fases y reestructurar tu novela en cualquier momento del proceso.",
+              "Cada hito tiene un tipo que se refleja en su color. Normalidad (gris) para momentos de establecimiento, giro (ambar) para puntos de inflexion, e incidente (rosa) para los eventos que rompen el equilibrio. Los colores te ayudan a ver el ritmo de la fase de un vistazo.",
           },
           {
             question: "Que relacion hay entre fases e hitos?",
             answer:
-              "Las fases son los grandes bloques de la estructura. Dentro de cada fase, los hitos marcan los puntos de inflexion. Y dentro de cada hito, las escenas son la accion concreta.",
+              "Las fases son los grandes bloques de la estructura. Dentro de cada fase, los hitos marcan los puntos de inflexion. Y dentro de cada hito, las escenas son la accion concreta. Es una jerarquia: fase > hito > escena.",
           },
         ]}
       />
 
       <CTASection
         title="Dale estructura a tu novela"
-        subtitle="Divide tu historia en fases y hitos. Ve la novela completa desde arriba."
+        subtitle="Divide tu historia en fases y hitos tipados. Ve la novela completa desde arriba."
       />
     </>
   );

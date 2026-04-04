@@ -1,12 +1,24 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import tippy from "tippy.js";
+import type { Instance as TippyInstance } from "tippy.js";
 import type { LugarPin } from "@/types/proyectos";
+
+export interface LugarPreviewData {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  tipo?: string;
+  mapa_url?: string;
+}
 
 interface MapaPinsProps {
   mapaUrl: string;
   pins: LugarPin[];
   lugares: { id: string; nombre: string }[];
+  /** Richer data for hover preview cards. Falls back to simple tooltip if not provided. */
+  lugarPreviews?: LugarPreviewData[];
   onPinsChange: (pins: LugarPin[]) => void;
   onPinClick?: (lugarId: string) => void;
   onUpload: (file: File) => Promise<void>;
@@ -14,10 +26,38 @@ interface MapaPinsProps {
   uploading?: boolean;
 }
 
+const TIPO_LABELS: Record<string, string> = {
+  mundo: "Mundo",
+  continente: "Continente",
+  pais: "País",
+  region: "Región",
+  ciudad: "Ciudad",
+  pueblo: "Pueblo",
+  edificio: "Edificio",
+  otro: "Otro",
+};
+
+function buildPreviewHTML(data: LugarPreviewData): string {
+  const tipoLabel = data.tipo ? TIPO_LABELS[data.tipo] || data.tipo : null;
+  return `<div class="mention-preview-card" style="border-top: 3px solid #589b9b;">
+    <div style="padding: 8px 12px 4px;">
+      <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #589b9b;">Lugar</span>
+    </div>
+    <div style="padding: 0 12px 12px;">
+      <div>
+        <p style="font-size: 0.875rem; font-weight: 600; color: var(--color-ink); margin: 0;">${data.nombre}</p>
+        ${tipoLabel ? `<span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: #589b9b;">${tipoLabel}</span>` : ""}
+      </div>
+      ${data.descripcion ? `<p style="font-size: 0.75rem; color: var(--color-ink-light); margin: 6px 0 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">${data.descripcion}</p>` : ""}
+    </div>
+  </div>`;
+}
+
 export function MapaPins({
   mapaUrl,
   pins,
   lugares,
+  lugarPreviews,
   onPinsChange,
   onPinClick,
   onUpload,
@@ -26,10 +66,56 @@ export function MapaPins({
 }: MapaPinsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pinRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const tippyInstances = useRef<Map<string, TippyInstance>>(new Map());
   const [placingPin, setPlacingPin] = useState(false);
   const [selectedLugarId, setSelectedLugarId] = useState<string>("");
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+
+  // Create/update tippy instances for preview cards
+  useEffect(() => {
+    if (!lugarPreviews) return;
+
+    const previewMap = new Map(lugarPreviews.map((l) => [l.id, l]));
+
+    // Create tippy for each pin that has preview data
+    for (const pin of pins) {
+      const el = pinRefs.current.get(pin.lugar_id);
+      const preview = previewMap.get(pin.lugar_id);
+      if (!el || !preview) continue;
+
+      // Destroy existing instance if any
+      tippyInstances.current.get(pin.lugar_id)?.destroy();
+
+      const instance = tippy(el, {
+        content: buildPreviewHTML(preview),
+        allowHTML: true,
+        interactive: true,
+        placement: "top",
+        appendTo: document.body,
+        theme: "mention-preview",
+        maxWidth: 320,
+        delay: [150, 100],
+        animation: "fade",
+      });
+
+      tippyInstances.current.set(pin.lugar_id, Array.isArray(instance) ? instance[0] : instance);
+    }
+
+    // Cleanup instances for removed pins
+    for (const [id, inst] of tippyInstances.current) {
+      if (!pins.some((p) => p.lugar_id === id)) {
+        inst.destroy();
+        tippyInstances.current.delete(id);
+      }
+    }
+
+    return () => {
+      for (const inst of tippyInstances.current.values()) inst.destroy();
+      tippyInstances.current.clear();
+    };
+  }, [pins, lugarPreviews]);
 
   const availableLugares = lugares.filter(
     (l) => !pins.some((p) => p.lugar_id === l.id)
@@ -213,6 +299,10 @@ export function MapaPins({
         {pins.map((pin) => (
           <div
             key={pin.lugar_id}
+            ref={(el) => {
+              if (el) pinRefs.current.set(pin.lugar_id, el);
+              else pinRefs.current.delete(pin.lugar_id);
+            }}
             className="absolute group"
             style={{
               left: `${pin.x}%`,
@@ -244,8 +334,8 @@ export function MapaPins({
               </svg>
             </button>
 
-            {/* Tooltip */}
-            {hoveredPin === pin.lugar_id && (
+            {/* Simple tooltip (only when no rich preview data) */}
+            {!lugarPreviews && hoveredPin === pin.lugar_id && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap z-10">
                 <div className="bg-[var(--color-ink)] text-white text-xs rounded px-2 py-1 shadow-lg flex items-center gap-1.5">
                   <span>{getLugarNombre(pin.lugar_id)}</span>

@@ -21,8 +21,11 @@ import type {
   EscenaInsert, EscenaUpdate,
   EventoPersonaje, EventoLugar,
   HitoPersonaje, HitoEvento,
+  ArcoPersonaje,
   EscenaPersonaje,
+  EscenaEvento,
   PersonajeEvolucion,
+  ManuscritoCarpeta, ManuscritoCarpetaInsert, ManuscritoCarpetaUpdate,
 } from "@/types/proyectos";
 
 const sb = createClient();
@@ -608,6 +611,28 @@ export function useArco(arcoId: string) {
   return { arco, save: debouncedSave };
 }
 
+// ── Arco Junctions ──────────────────────────────────────
+
+export function useArcoPersonajes(arcoId: string) {
+  const [links, setLinks] = useState<ArcoPersonaje[]>([]);
+
+  useEffect(() => {
+    q.fetchArcoPersonajes(sb, arcoId).then(setLinks).catch(console.error);
+  }, [arcoId]);
+
+  const add = useCallback(async (personajeId: string) => {
+    const link = await q.addArcoPersonaje(sb, arcoId, personajeId);
+    setLinks((prev) => [...prev, link]);
+  }, [arcoId]);
+
+  const remove = useCallback(async (id: string) => {
+    await q.removeArcoPersonaje(sb, id);
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
+  return { links, add, remove };
+}
+
 // ── Escenas ──────────────────────────────────────────────
 
 export function useEscenas(projectId: string) {
@@ -674,6 +699,80 @@ export function useEscenaPersonajes(escenaId: string) {
   return { links, add, remove };
 }
 
+export function useEscenaEventos(escenaId: string) {
+  const [links, setLinks] = useState<EscenaEvento[]>([]);
+
+  useEffect(() => {
+    q.fetchEscenaEventos(sb, escenaId).then(setLinks).catch(console.error);
+  }, [escenaId]);
+
+  const add = useCallback(async (eventoId: string) => {
+    const link = await q.addEscenaEvento(sb, escenaId, eventoId);
+    setLinks((prev) => [...prev, link]);
+  }, [escenaId]);
+
+  const remove = useCallback(async (id: string) => {
+    await q.removeEscenaEvento(sb, id);
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
+  return { links, add, remove };
+}
+
+// ── Evento → Hito junction ──────────────────────────────────
+export function useEventoHitos(eventoId: string) {
+  const [links, setLinks] = useState<HitoEvento[]>([]);
+
+  useEffect(() => {
+    q.fetchEventoHitos(sb, eventoId).then(setLinks).catch(console.error);
+  }, [eventoId]);
+
+  const add = useCallback(async (hitoId: string) => {
+    const link = await q.addEventoHito(sb, eventoId, hitoId);
+    setLinks((prev) => [...prev, link]);
+  }, [eventoId]);
+
+  const remove = useCallback(async (id: string) => {
+    await q.removeEventoHito(sb, id);
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
+  return { links, add, remove };
+}
+
+// ── Evento → Escena junction ────────────────────────────────
+export function useEventoEscenas(eventoId: string) {
+  const [links, setLinks] = useState<EscenaEvento[]>([]);
+
+  useEffect(() => {
+    q.fetchEventoEscenas(sb, eventoId).then(setLinks).catch(console.error);
+  }, [eventoId]);
+
+  const add = useCallback(async (escenaId: string) => {
+    const link = await q.addEventoEscena(sb, eventoId, escenaId);
+    setLinks((prev) => [...prev, link]);
+  }, [eventoId]);
+
+  const remove = useCallback(async (id: string) => {
+    await q.removeEventoEscena(sb, id);
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
+  return { links, add, remove };
+}
+
+// ── Escena Personajes by Personaje ──────────────────────
+
+export function useEscenasByPersonaje(personajeId: string) {
+  const [links, setLinks] = useState<EscenaPersonaje[]>([]);
+
+  useEffect(() => {
+    q.fetchEscenaPersonajesByPersonaje(sb, personajeId).then(setLinks).catch(console.error);
+  }, [personajeId]);
+
+  return { links };
+}
+
 // ── Personaje Evoluciones ───────────────────────────────
 
 export function usePersonajeEvoluciones(personajeId: string) {
@@ -703,4 +802,34 @@ export function usePersonajeEvoluciones(personajeId: string) {
   }, [removePersonajeEvolucion]);
 
   return { evoluciones: personajeEvoluciones, create, update: debouncedUpdate, remove };
+}
+
+// ── Manuscrito Carpetas ────────────────────────────────────
+
+export function useManuscritoCarpetas(projectId: string) {
+  const [carpetas, setCarpetas] = useState<ManuscritoCarpeta[]>([]);
+
+  useEffect(() => {
+    q.fetchManuscritoCarpetas(sb, projectId).then(setCarpetas).catch(console.error);
+    return () => setCarpetas([]);
+  }, [projectId]);
+
+  const create = useCallback(async (data: ManuscritoCarpetaInsert) => {
+    const carpeta = await q.createManuscritoCarpeta(sb, projectId, data);
+    setCarpetas((prev) => [...prev, carpeta]);
+    return carpeta;
+  }, [projectId]);
+
+  const update = useCallback(async (id: string, data: ManuscritoCarpetaUpdate) => {
+    const updated = await q.updateManuscritoCarpeta(sb, id, data);
+    setCarpetas((prev) => prev.map((c) => (c.id === id ? updated : c)));
+    return updated;
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    await q.deleteManuscritoCarpeta(sb, id);
+    setCarpetas((prev) => prev.filter((c) => c.id !== id));
+  }, []);
+
+  return { carpetas, create, update, remove };
 }

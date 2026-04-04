@@ -18,6 +18,8 @@ const CORRECTOR_LINKS = [
 
 const PLANIFICADOR_LINKS = [
   { title: "Planificador", href: "/planificador" },
+  { title: "Manuscrito", href: "/planificador/manuscrito" },
+  { title: "Estructura", href: "/planificador/estructura" },
   { title: "Personajes", href: "/planificador/personajes" },
   { title: "Arcos narrativos", href: "/planificador/arcos-narrativos" },
   { title: "Escenas", href: "/planificador/escenas" },

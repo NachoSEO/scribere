@@ -12,6 +12,12 @@ interface JunctionSelectorProps {
   onRemove: (junctionId: string) => void;
   /** Map from option ID to junction record ID for removal */
   junctionMap: Map<string, string>;
+  /** Optional custom renderer for linked item tags */
+  renderTag?: (
+    item: { id: string; nombre: string },
+    junctionId: string | undefined,
+    onRemove: (junctionId: string) => void
+  ) => React.ReactNode;
 }
 
 export function JunctionSelector({
@@ -21,6 +27,7 @@ export function JunctionSelector({
   onAdd,
   onRemove,
   junctionMap,
+  renderTag,
 }: JunctionSelectorProps) {
   const [adding, setAdding] = useState(false);
 
@@ -79,6 +86,7 @@ export function JunctionSelector({
       <div className="flex flex-wrap gap-1.5">
         {linked.map((item) => {
           const junctionId = junctionMap.get(item.id);
+          if (renderTag) return renderTag(item, junctionId, onRemove);
           return (
             <span
               key={item.id}

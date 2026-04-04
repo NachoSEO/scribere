@@ -8,10 +8,24 @@ import { FeatureShowcase } from "@/components/marketing/FeatureShowcase";
 export const metadata: Metadata = {
   title: "Planificador de novelas - Scritura | Herramienta para escritores",
   description:
-    "Estructura tu novela desde la premisa hasta cada escena. Personajes, arcos narrativos, fases, hitos y relaciones. Planifica sin limites.",
+    "Estructura tu novela desde la premisa hasta cada escena. Manuscrito con @menciones, estructura jerarquica, personajes, arcos narrativos, fases, hitos y relaciones. Planifica sin limites.",
 };
 
 const FEATURES = [
+  {
+    title: "Manuscrito",
+    description:
+      "Escribe tu novela en un editor con @menciones a personajes, lugares y eventos. Modo concentracion y corrector integrado.",
+    href: "/planificador/manuscrito",
+    color: "#8b6f47",
+  },
+  {
+    title: "Estructura",
+    description:
+      "Visualiza la columna vertebral de tu novela: fases, hitos, arcos y escenas en un arbol jerarquico.",
+    href: "/planificador/estructura",
+    color: "#8b6f47",
+  },
   {
     title: "Personajes",
     description:
@@ -121,6 +135,19 @@ function HierarchyVisual() {
         </div>
         <div className="h-4 w-px bg-[var(--color-border)]" />
 
+        {/* Arcos */}
+        <div className="flex items-center gap-2">
+          {["El cristal muerto", "La proteccion de Kael", "Alianza con Nira"].map((arc) => (
+            <div
+              key={arc}
+              className="rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5 px-3 py-1.5 text-xs text-[var(--color-accent-dark)]"
+            >
+              {arc}
+            </div>
+          ))}
+        </div>
+        <div className="h-4 w-px bg-[var(--color-border)]" />
+
         {/* Escenas */}
         <div className="flex items-center gap-2">
           {["Escena 1", "Escena 2", "Escena 3", "Escena 4"].map((scene) => (
@@ -132,9 +159,15 @@ function HierarchyVisual() {
             </div>
           ))}
         </div>
+        <div className="h-4 w-px bg-[var(--color-border)]" />
+
+        {/* Manuscrito */}
+        <div className="rounded-lg border-2 border-dashed border-[var(--color-accent)]/40 bg-[var(--color-cream)] px-5 py-2 text-xs font-semibold text-[var(--color-ink)]">
+          Manuscrito (editor con @menciones)
+        </div>
       </div>
       <p className="mt-4 text-center text-xs text-[var(--color-ink-muted)]">
-        Jerarquia completa: Proyecto → General → Fases → Hitos → Escenas
+        Jerarquia completa: Proyecto → General → Fases → Hitos → Arcos → Escenas → Manuscrito
       </p>
     </div>
   );
@@ -152,7 +185,7 @@ export default function PlanificadorPage() {
             <span className="text-[var(--color-accent)]">con precision</span>
           </>
         }
-        subtitle="Desde la premisa inicial hasta la ultima escena. Organiza personajes, arcos, fases y relaciones en un solo lugar. Tu novela merece un plan solido."
+        subtitle="Desde la premisa inicial hasta la ultima escena. Organiza personajes, arcos, fases y relaciones en un solo lugar. Escribe el manuscrito con @menciones a todo tu mundo narrativo. Tu novela merece un plan solido."
         secondaryCta={{ text: "Ver todas las herramientas", href: "/" }}
       />
 
@@ -170,14 +203,14 @@ export default function PlanificadorPage() {
           {
             title: "Visualiza la estructura completa de tu novela",
             description:
-              "Cada proyecto sigue una jerarquia clara: desde la premisa general hasta las escenas individuales. Fases, hitos y escenas se organizan de forma natural, para que siempre sepas donde estas y hacia donde vas. No mas documentos sueltos ni notas perdidas.",
+              "Cada proyecto sigue una jerarquia clara: desde la premisa general hasta las escenas individuales. Fases, hitos, arcos y escenas se organizan de forma natural, para que siempre sepas donde estas y hacia donde vas. Cuando tengas la estructura lista, abre el manuscrito y escribe con @menciones a personajes, lugares y eventos. No mas documentos sueltos ni notas perdidas.",
             visual: <HierarchyVisual />,
           },
         ]}
       />
 
       <FeatureGrid
-        title="Nueve herramientas de planificacion"
+        title="Once herramientas de planificacion"
         subtitle="Cada aspecto de tu novela tiene su propio espacio. Trabaja en lo que necesites, cuando lo necesites."
         features={FEATURES}
       />
@@ -198,15 +231,24 @@ export default function PlanificadorPage() {
             <p>
               Empieza por lo grande: define la premisa, el genero y el tono de tu
               proyecto. Despues, divide la historia en fases (actos, partes,
-              temporadas) y coloca los hitos que marcan los giros clave. Dentro de
-              cada hito, crea las escenas que lo componen. Mientras tanto, desarrolla
-              tus personajes, sus arcos narrativos y las relaciones entre ellos.
+              temporadas) y coloca los hitos que marcan los giros clave. Disena los
+              arcos narrativos con resolucion YBNA y vinculalos a los hitos que los
+              contienen. Dentro de cada hito, crea las escenas que lo componen.
+              Mientras tanto, desarrolla tus personajes, sus lineas de evolucion y
+              las relaciones entre ellos.
             </p>
             <p>
               No tienes que seguir un orden fijo. Algunos escritores empiezan por los
               personajes; otros, por la estructura de tres actos; otros, por el
               worldbuilding. El planificador se adapta a tu proceso creativo, no al
               reves.
+            </p>
+            <p>
+              Cuando tengas la estructura lista, abre el editor de manuscrito.
+              Escribe tus escenas y usa @menciones para referenciar a personajes,
+              lugares y eventos directamente en el texto. El modo concentracion
+              elimina distracciones y el corrector integrado te ayuda a pulir la
+              prosa. Asi, planificacion y escritura viven en el mismo lugar.
             </p>
             <p>
               Lo importante es que, cuando te sientes a escribir, sepas exactamente

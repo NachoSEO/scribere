@@ -14,9 +14,10 @@ interface EntityFormProps {
   fields: FieldConfig[];
   values: Record<string, string>;
   onChange: (key: string, value: string) => void;
+  projectId?: string;
 }
 
-export function EntityForm({ fields, values, onChange }: EntityFormProps) {
+export function EntityForm({ fields, values, onChange, projectId }: EntityFormProps) {
   return (
     <div className="space-y-4">
       {fields.map((field) => (
@@ -28,6 +29,7 @@ export function EntityForm({ fields, values, onChange }: EntityFormProps) {
           multiline={field.multiline}
           rows={field.rows}
           placeholder={field.placeholder}
+          projectId={projectId}
         />
       ))}
     </div>

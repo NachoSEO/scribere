@@ -3,8 +3,10 @@
 import { use, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useFaccion, useFacciones, useFaccionRelaciones } from "@/lib/proyectos/hooks";
+import { useFaccion, useFacciones, useFaccionRelaciones, usePersonajes } from "@/lib/proyectos/hooks";
 import { useProyectosStore } from "@/lib/proyectos/store";
+import { updatePersonaje } from "@/lib/proyectos/queries";
+import { createClient } from "@/lib/supabase/client";
 import { ImageUploader } from "@/components/proyectos/ImageUploader";
 import { CompactCard } from "@/components/proyectos/CompactCard";
 import { EntityBadge } from "@/components/proyectos/EntityBadge";
@@ -22,18 +24,47 @@ export default function FaccionDetailPage({
   const { projectId, faccionId } = use(params);
   const router = useRouter();
   const { faccion, save } = useFaccion(faccionId);
-  const { remove } = useFacciones(projectId);
+  const { remove, create: createFaccion } = useFacciones(projectId);
   const { relaciones: rawRelaciones, available, create: createRelacion, update: updateRelacion, remove: removeRelacion } = useFaccionRelaciones(faccionId);
+  const { create: createPersonaje } = usePersonajes(projectId);
   const personajes = useProyectosStore((s) => s.personajes);
+  const updatePersonajeInList = useProyectosStore((s) => s.updatePersonajeInList);
   const [showDelete, setShowDelete] = useState(false);
   const [addingRelacion, setAddingRelacion] = useState(false);
   const [selectedId, setSelectedId] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [creatingMember, setCreatingMember] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [creatingRelFaccion, setCreatingRelFaccion] = useState(false);
+  const [newRelFaccionName, setNewRelFaccionName] = useState("");
 
   // Members: personajes belonging to this facción
   const members = useMemo(
     () => personajes.filter((p) => p.faccion_id === faccionId),
     [personajes, faccionId]
   );
+
+  // Personajes not yet in this faction
+  const availableMembers = useMemo(
+    () => personajes.filter((p) => p.faccion_id !== faccionId),
+    [personajes, faccionId]
+  );
+
+  const handleAddMember = useCallback(async () => {
+    if (!selectedMemberId) return;
+    const sb = createClient();
+    const updated = await updatePersonaje(sb, selectedMemberId, { faccion_id: faccionId });
+    updatePersonajeInList(updated);
+    setSelectedMemberId("");
+    setAddingMember(false);
+  }, [selectedMemberId, faccionId, updatePersonajeInList]);
+
+  const handleRemoveMember = useCallback(async (personajeId: string) => {
+    const sb = createClient();
+    const updated = await updatePersonaje(sb, personajeId, { faccion_id: null });
+    updatePersonajeInList(updated);
+  }, [updatePersonajeInList]);
 
   // Map relaciones for display
   const relaciones = useMemo(() => {
@@ -65,6 +96,21 @@ export default function FaccionDetailPage({
     setSelectedId("");
     setAddingRelacion(false);
   }, [createRelacion, faccionId, selectedId]);
+
+  const handleCreateMember = useCallback(async () => {
+    if (!newMemberName.trim()) return;
+    await createPersonaje({ nombre: newMemberName.trim(), faccion_id: faccionId });
+    setNewMemberName("");
+    setCreatingMember(false);
+  }, [newMemberName, createPersonaje, faccionId]);
+
+  const handleCreateRelFaccion = useCallback(async () => {
+    if (!newRelFaccionName.trim()) return;
+    const newF = await createFaccion({ nombre: newRelFaccionName.trim() });
+    await createRelacion({ faccion_a_id: faccionId, faccion_b_id: newF.id });
+    setNewRelFaccionName("");
+    setCreatingRelFaccion(false);
+  }, [newRelFaccionName, createFaccion, createRelacion, faccionId]);
 
   if (!faccion) return <div className="p-6 text-sm text-[var(--color-ink-muted)]">Cargando...</div>;
 
@@ -103,34 +149,111 @@ export default function FaccionDetailPage({
           value={faccion.concepto}
           onChange={(v) => save({ concepto: v })}
           placeholder="El concepto central..."
+          projectId={projectId}
         />
         <CompactCard
           label="Objetivos"
           value={faccion.objetivos}
           onChange={(v) => save({ objetivos: v })}
           placeholder="Los objetivos..."
+          projectId={projectId}
         />
         <CompactCard
           label="Motivación"
           value={faccion.motivacion}
           onChange={(v) => save({ motivacion: v })}
           placeholder="La motivación principal..."
+          projectId={projectId}
         />
         <CompactCard
           label="Complicación"
           value={faccion.complicacion}
           onChange={(v) => save({ complicacion: v })}
           placeholder="Los obstáculos..."
+          projectId={projectId}
         />
       </div>
 
       {/* Members */}
       <div className="mt-6">
-        <h3 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-2">
-          Miembros
-        </h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium">
+            Miembros
+          </h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCreatingMember(true)}
+              className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors"
+            >
+              + Crear
+            </button>
+            {availableMembers.length > 0 && (
+              <button
+                onClick={() => setAddingMember(true)}
+                className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors"
+              >
+                + Añadir existente
+              </button>
+            )}
+          </div>
+        </div>
+
+        {creatingMember && (
+          <div className="mb-3 flex gap-2">
+            <input
+              autoFocus
+              value={newMemberName}
+              onChange={(e) => setNewMemberName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreateMember(); if (e.key === "Escape") { setCreatingMember(false); setNewMemberName(""); } }}
+              placeholder="Nombre del nuevo personaje..."
+              className="flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
+            />
+            <button
+              onClick={handleCreateMember}
+              disabled={!newMemberName.trim()}
+              className="rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--color-accent-dark)] disabled:opacity-50"
+            >
+              Crear
+            </button>
+            <button
+              onClick={() => { setCreatingMember(false); setNewMemberName(""); }}
+              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-ink-light)] hover:bg-[var(--color-cream-dark)]"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+
+        {addingMember && (
+          <div className="mb-3 flex gap-2">
+            <select
+              value={selectedMemberId}
+              onChange={(e) => setSelectedMemberId(e.target.value)}
+              className="flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
+            >
+              <option value="">Seleccionar personaje...</option>
+              {availableMembers.map((p) => (
+                <option key={p.id} value={p.id}>{p.nombre || "Sin nombre"}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleAddMember}
+              disabled={!selectedMemberId}
+              className="rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--color-accent-dark)] disabled:opacity-50"
+            >
+              Añadir
+            </button>
+            <button
+              onClick={() => { setAddingMember(false); setSelectedMemberId(""); }}
+              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-ink-light)] hover:bg-[var(--color-cream-dark)]"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
-          {members.length === 0 && (
+          {members.length === 0 && !addingMember && (
             <p className="text-xs text-[var(--color-ink-muted)] italic">Sin miembros asignados</p>
           )}
           {members.map((p) => (
@@ -138,6 +261,7 @@ export default function FaccionDetailPage({
               key={p.id}
               nombre={p.nombre || "Sin nombre"}
               href={`/app/proyectos/${projectId}/personajes/${p.id}`}
+              onRemove={() => handleRemoveMember(p.id)}
             />
           ))}
         </div>
@@ -149,15 +273,49 @@ export default function FaccionDetailPage({
           <h3 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium">
             Relaciones con facciones
           </h3>
-          {unrelatedOptions.length > 0 && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setAddingRelacion(true)}
+              onClick={() => setCreatingRelFaccion(true)}
               className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors"
             >
-              + Añadir
+              + Crear facción
             </button>
-          )}
+            {unrelatedOptions.length > 0 && (
+              <button
+                onClick={() => setAddingRelacion(true)}
+                className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors"
+              >
+                + Añadir existente
+              </button>
+            )}
+          </div>
         </div>
+
+        {creatingRelFaccion && (
+          <div className="mb-3 flex gap-2">
+            <input
+              autoFocus
+              value={newRelFaccionName}
+              onChange={(e) => setNewRelFaccionName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreateRelFaccion(); if (e.key === "Escape") { setCreatingRelFaccion(false); setNewRelFaccionName(""); } }}
+              placeholder="Nombre de la nueva facción..."
+              className="flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
+            />
+            <button
+              onClick={handleCreateRelFaccion}
+              disabled={!newRelFaccionName.trim()}
+              className="rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--color-accent-dark)] disabled:opacity-50"
+            >
+              Crear
+            </button>
+            <button
+              onClick={() => { setCreatingRelFaccion(false); setNewRelFaccionName(""); }}
+              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-ink-light)] hover:bg-[var(--color-cream-dark)]"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
 
         {addingRelacion && (
           <div className="mb-3 flex gap-2">

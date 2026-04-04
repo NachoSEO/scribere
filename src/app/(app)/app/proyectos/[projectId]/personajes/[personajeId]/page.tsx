@@ -2,13 +2,20 @@
 
 import { use, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   usePersonaje,
   usePersonajes,
   usePersonajeRelaciones,
   usePersonajeEvoluciones,
+  useFacciones,
+  useHitos,
+  useFases,
+  useEscenas,
+  useEscenasByPersonaje,
 } from "@/lib/proyectos/hooks";
 import { useProyectosStore } from "@/lib/proyectos/store";
+import { PERSONAJE_TIPO_OPTIONS } from "@/types/proyectos";
 import { ImageUploader } from "@/components/proyectos/ImageUploader";
 import { CompactCard } from "@/components/proyectos/CompactCard";
 import { EntityBadge } from "@/components/proyectos/EntityBadge";
@@ -28,12 +35,25 @@ export default function PersonajeDetailPage({
   const { remove } = usePersonajes(projectId);
   const { relaciones: rawRelaciones, available, create: createRelacion, update: updateRelacion, remove: removeRelacion } = usePersonajeRelaciones(personajeId);
   const { evoluciones, create: createEvolucion, update: updateEvolucion, remove: removeEvolucion } = usePersonajeEvoluciones(personajeId);
+  useFacciones(projectId);
   const facciones = useProyectosStore((s) => s.facciones);
   const arcos = useProyectosStore((s) => s.arcos);
   const allPersonajes = useProyectosStore((s) => s.personajes);
+  const { hitos } = useHitos(projectId);
+  const { fases } = useFases(projectId);
+  const { escenas } = useEscenas(projectId);
+  const { links: escenaPersonajeLinks } = useEscenasByPersonaje(personajeId);
+
+  // Escenas where this personaje appears
+  const escenasDelPersonaje = useMemo(() => {
+    const escenaIds = new Set(escenaPersonajeLinks.map((l) => l.escena_id));
+    return escenas.filter((e) => escenaIds.has(e.id));
+  }, [escenas, escenaPersonajeLinks]);
+
   const [showDelete, setShowDelete] = useState(false);
   const [addingRelacion, setAddingRelacion] = useState(false);
   const [selectedId, setSelectedId] = useState("");
+  const [showCustomTipo, setShowCustomTipo] = useState(false);
 
   // Map relaciones
   const relaciones = useMemo(() => {
@@ -109,12 +129,33 @@ export default function PersonajeDetailPage({
           <div className="mt-2 flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)]">Tipo:</span>
-              <input
-                value={personaje.tipo}
-                onChange={(e) => save({ tipo: e.target.value })}
-                placeholder="Protagonista, antagonista..."
-                className="border-0 bg-transparent text-xs text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none w-40"
-              />
+              {showCustomTipo || (personaje.tipo && !PERSONAJE_TIPO_OPTIONS.includes(personaje.tipo)) ? (
+                <input
+                  value={personaje.tipo}
+                  onChange={(e) => save({ tipo: e.target.value })}
+                  placeholder="Tipo personalizado..."
+                  className="border-0 bg-transparent text-xs text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none w-40"
+                />
+              ) : (
+                <select
+                  value={personaje.tipo}
+                  onChange={(e) => {
+                    if (e.target.value === "__custom__") {
+                      setShowCustomTipo(true);
+                      save({ tipo: "" });
+                    } else {
+                      save({ tipo: e.target.value });
+                    }
+                  }}
+                  className="border-0 bg-transparent text-xs text-[var(--color-ink)] focus:outline-none cursor-pointer"
+                >
+                  <option value="">Sin tipo</option>
+                  {PERSONAJE_TIPO_OPTIONS.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                  <option value="__custom__">Otro...</option>
+                </select>
+              )}
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)]">Facción:</span>
@@ -165,28 +206,39 @@ export default function PersonajeDetailPage({
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <CompactCard
+            label="Concepto"
+            value={personaje.concepto}
+            onChange={(v) => save({ concepto: v })}
+            placeholder="El concepto central del personaje..."
+            projectId={projectId}
+          />
+          <CompactCard
             label="Función narrativa"
             value={personaje.funcion_narrativa}
             onChange={(v) => save({ funcion_narrativa: v })}
             placeholder="El rol en la historia..."
+            projectId={projectId}
           />
           <CompactCard
             label="Motivación"
             value={personaje.motivacion}
             onChange={(v) => save({ motivacion: v })}
             placeholder="Lo que impulsa al personaje..."
+            projectId={projectId}
           />
           <CompactCard
             label="Complicación"
             value={personaje.complicacion}
             onChange={(v) => save({ complicacion: v })}
             placeholder="Los obstáculos..."
+            projectId={projectId}
           />
           <CompactCard
             label="Descripción"
             value={personaje.descripcion}
             onChange={(v) => save({ descripcion: v })}
             placeholder="Descripción del personaje..."
+            projectId={projectId}
           />
         </div>
       </div>
@@ -264,11 +316,45 @@ export default function PersonajeDetailPage({
         <EvolutionTimeline
           evoluciones={evoluciones}
           arcos={arcos}
+          hitos={hitos}
+          fases={fases}
+          escenas={escenas}
+          projectId={projectId}
           onAdd={handleAddEvolucion}
           onUpdate={handleUpdateEvolucion}
           onRemove={removeEvolucion}
           onReorder={handleReorderEvolucion}
         />
+      </div>
+
+      {/* Escenas */}
+      <div className="mt-6">
+        <h3 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-2 flex items-center gap-2">
+          Escenas ({escenasDelPersonaje.length})
+          <span className="flex-1 border-t border-[var(--color-border-light)]" />
+        </h3>
+        {escenasDelPersonaje.length === 0 ? (
+          <p className="text-xs text-[var(--color-ink-muted)] italic">No aparece en ninguna escena</p>
+        ) : (
+          <div className="space-y-1.5">
+            {escenasDelPersonaje.map((esc) => (
+              <Link
+                key={esc.id}
+                href={`/app/proyectos/${projectId}/escenas/${esc.id}`}
+                className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-white p-3 text-left transition-colors hover:border-[var(--color-accent-light)] hover:bg-[var(--color-cream)]"
+              >
+                <span className="text-sm text-[var(--color-ink)]">
+                  {esc.resumen || <span className="italic text-[var(--color-ink-muted)]">Sin resumen</span>}
+                </span>
+                {esc.objetivo && (
+                  <span className="ml-auto text-xs text-[var(--color-ink-muted)] line-clamp-1 max-w-[200px]">
+                    {esc.objetivo}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Notas */}

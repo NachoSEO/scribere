@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/marketing/HeroSection";
 import { CTASection } from "@/components/marketing/CTASection";
+import { FeatureShowcase } from "@/components/marketing/FeatureShowcase";
 import { InternalLinkBanner } from "@/components/marketing/InternalLinkBanner";
 import { FAQSection } from "@/components/marketing/FAQSection";
+import { MockYBNAArcs } from "@/components/marketing/mocks";
 
 export const metadata: Metadata = {
-  title: "Arcos narrativos - Scritura | Herramienta para escritores",
+  title: "Arcos narrativos con resolucion YBNA - Scritura | Planificador",
   description:
-    "Disena arcos narrativos completos con planteamiento, nudo y desenlace. Estructura cada trama de tu novela con claridad y proposito.",
+    "Disena arcos narrativos con planteamiento, nudo y desenlace. Clasifica cada resolucion como Si, Si pero, No o No y ademas. Vincula arcos a hitos y personajes.",
 };
 
 function ArcMock() {
@@ -15,42 +17,57 @@ function ArcMock() {
     <div className="mx-auto max-w-2xl rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-bold text-[var(--color-ink)]">
-          Arco: La busqueda de Elena
+          Arco: El cristal muerto
         </h3>
-        <span className="rounded-full bg-[var(--color-accent)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--color-accent)]">
-          Trama principal
+        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+          Si, pero...
         </span>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-cream)] p-4">
           <p className="mb-2 text-xs font-semibold text-[var(--color-accent)]">Planteamiento</p>
           <p className="text-xs leading-relaxed text-[var(--color-ink-light)]">
-            Elena vuelve a su pueblo natal tras recibir una carta anonima sobre la
-            desaparicion de su hermana hace diez anos.
+            Lyra trabaja como aprendiz en los talleres de cristales de Sorvara. Un
+            cristal que todos dan por muerto responde a su tacto. La Orden lo nota.
           </p>
         </div>
         <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-cream)] p-4">
           <p className="mb-2 text-xs font-semibold text-[var(--color-accent)]">Nudo</p>
           <p className="text-xs leading-relaxed text-[var(--color-ink-light)]">
-            Las pistas la llevan a descubrir que varios vecinos ocultan
-            informacion. Su propia familia le miente sobre aquella noche.
+            Fuera de Sorvara, Lyra descubre que cada resonancia le cuesta un recuerdo
+            de su infancia. La Orden la persigue. Nira le ensena a resonar sin
+            cristales, pero la alianza es fragil.
           </p>
         </div>
         <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-cream)] p-4">
           <p className="mb-2 text-xs font-semibold text-[var(--color-accent)]">Desenlace</p>
           <p className="text-xs leading-relaxed text-[var(--color-ink-light)]">
-            Elena descubre que su hermana huyo por voluntad propia, protegiendo a
-            la familia de un secreto mayor.
+            Lyra consigue despertar el cristal muerto y romper el monopolio de la
+            Orden, pero ha perdido todos los recuerdos de su madre.
           </p>
         </div>
       </div>
-      <div className="mt-4 flex items-center gap-2">
+
+      {/* Hito origin/destination */}
+      <div className="mt-4 flex items-center gap-2 text-xs text-[var(--color-ink-muted)]">
+        <span className="font-medium">Hitos:</span>
+        <span className="rounded-md bg-[var(--color-cream)] px-2 py-0.5">
+          La vida en los talleres
+        </span>
+        <span>&#8594;</span>
+        <span className="rounded-md bg-[var(--color-cream)] px-2 py-0.5">
+          Despertar del don
+        </span>
+      </div>
+
+      {/* Characters */}
+      <div className="mt-3 flex items-center gap-2">
         <span className="text-xs text-[var(--color-ink-muted)]">Personajes:</span>
         <span className="rounded-md bg-[var(--color-cream-dark)] px-2 py-0.5 text-xs text-[var(--color-ink-muted)]">
-          Elena Marchetti
+          Lyra
         </span>
         <span className="rounded-md bg-[var(--color-cream-dark)] px-2 py-0.5 text-xs text-[var(--color-ink-muted)]">
-          Sofia Marchetti
+          Kael
         </span>
       </div>
     </div>
@@ -66,16 +83,27 @@ export default function ArcosNarrativosPage() {
           <>
             Disena arcos narrativos
             <br />
-            <span className="text-[var(--color-accent)]">completos</span>
+            <span className="text-[var(--color-accent)]">con resolucion</span>
           </>
         }
-        subtitle="Cada trama necesita un principio, un conflicto y una resolucion. Estructura tus arcos narrativos para que ninguna linea argumental quede sin cerrar."
+        subtitle="Cada trama necesita un principio, un conflicto y un cierre. Estructura tus arcos con planteamiento, nudo y desenlace, y clasifica la resolucion: el personaje lo consigue, lo consigue con un precio, fracasa, o fracasa y todo empeora."
       />
 
       {/* Mock UI */}
       <section className="px-8 pb-20">
         <ArcMock />
       </section>
+
+      <FeatureShowcase
+        features={[
+          {
+            title: "Cuatro tipos de resolucion narrativa",
+            description:
+              "Cada arco se cierra de una de cuatro formas: Si (el personaje logra su objetivo), Si pero (lo logra con un coste), No (fracasa) o No y ademas (fracasa y las consecuencias empeoran). Este sistema YBNA te obliga a decidir como termina cada trama antes de escribirla. El cristal muerto de Lyra es un \"Si, pero...\": consigue romper el monopolio de la Orden, pero pierde los recuerdos de su madre. Esa claridad cambia como escribes cada escena.",
+            visual: <MockYBNAArcs />,
+          },
+        ]}
+      />
 
       {/* Por que necesitas esto */}
       <section className="border-y border-[var(--color-border)] bg-white px-8 py-20">
@@ -94,8 +122,16 @@ export default function ArcosNarrativosPage() {
               multiplican. La trama principal, las subtramas, los arcos de
               personajes secundarios... Sin una herramienta que los organice, es
               facil que una subtrama quede sin resolver o que un arco pierda su
-              ritmo. Scritura te da un espacio dedicado para cada arco, con la
-              estructura clasica de planteamiento, nudo y desenlace.
+              ritmo.
+            </p>
+            <p>
+              Scritura te da un espacio dedicado para cada arco, con planteamiento,
+              nudo y desenlace. Pero ademas te pide que elijas el tipo de resolucion.
+              No es lo mismo que Lyra consiga despertar el cristal (Si) a que lo
+              consiga perdiendo sus recuerdos (Si, pero...). Definir eso antes de
+              escribir te da una brujula para cada escena del arco. Y cada arco se
+              ancla a dos hitos: el que lo origina y el que lo cierra, para que
+              siempre sepas donde empieza y donde termina dentro de la estructura.
             </p>
           </div>
         </div>
@@ -116,8 +152,9 @@ export default function ArcosNarrativosPage() {
                 Nombra el arco
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Dale un nombre descriptivo que identifique la trama: "La redencion
-                de Marco", "El secreto del pueblo" o "Romance entre Ana y Luis".
+                Dale un nombre que identifique la trama: &quot;El cristal muerto&quot;,
+                &quot;La proteccion de Kael&quot; o &quot;Alianza con Nira&quot;.
+                Selecciona los personajes involucrados.
               </p>
             </div>
             <div className="text-center">
@@ -125,12 +162,12 @@ export default function ArcosNarrativosPage() {
                 2
               </div>
               <h3 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
-                Estructura en tres partes
+                Estructura y elige resolucion
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Define el planteamiento (donde arranca la trama), el nudo (el
-                conflicto central) y el desenlace (como se resuelve). Tres campos
-                que obligan a pensar en la progresion.
+                Define planteamiento, nudo y desenlace. Despues selecciona el tipo
+                YBNA: Si, Si pero, No o No y ademas. Esa decision marca el tono de
+                todo el arco.
               </p>
             </div>
             <div className="text-center">
@@ -138,11 +175,12 @@ export default function ArcosNarrativosPage() {
                 3
               </div>
               <h3 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
-                Vincula personajes
+                Ancla a dos hitos
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Asocia los personajes involucrados en cada arco. Asi controlas que
-                personajes participan en cada trama y evitas inconsistencias.
+                Selecciona el hito donde nace el arco y el hito donde se cierra.
+                Asi el arco queda integrado en la estructura de fases y hitos de
+                tu novela, no flotando en el vacio.
               </p>
             </div>
           </div>
@@ -153,18 +191,18 @@ export default function ArcosNarrativosPage() {
         title="Herramientas relacionadas"
         links={[
           {
-            title: "Fases",
-            description: "Organiza tus arcos dentro de la estructura de actos y fases de la novela.",
-            href: "/planificador/fases",
+            title: "Estructura",
+            description: "Visualiza fases, hitos, arcos y escenas en un arbol jerarquico completo.",
+            href: "/planificador/estructura",
           },
           {
             title: "Hitos",
-            description: "Marca los momentos clave que hacen avanzar cada arco narrativo.",
+            description: "Define los momentos clave que originan y cierran cada arco narrativo.",
             href: "/planificador/hitos",
           },
           {
             title: "Personajes",
-            description: "Crea fichas completas para los personajes que protagonizan cada arco.",
+            description: "Crea fichas de Lyra, Kael y cada personaje que participa en tus arcos.",
             href: "/planificador/personajes",
           },
         ]}
@@ -173,26 +211,31 @@ export default function ArcosNarrativosPage() {
       <FAQSection
         items={[
           {
+            question: "Que es el sistema YBNA?",
+            answer:
+              "YBNA son cuatro tipos de resolucion narrativa: Si (Yes), Si pero (Yes But), No, y No y ademas (No And). Clasificar cada arco con uno de estos tipos te obliga a decidir como termina la trama antes de escribirla. Un \"Si, pero...\" como el de Lyra genera un tipo de tension muy distinto a un \"No y ademas\" como el de Aldric.",
+          },
+          {
             question: "Cuantos arcos puedo crear por proyecto?",
             answer:
-              "No hay limite. Puedes crear tantos arcos como necesites: trama principal, subtramas, arcos de personaje, tramas romanticas, etc.",
+              "No hay limite. Puedes crear tantos arcos como necesites: trama principal, subtramas, arcos de personaje, tramas romanticas y cualquier linea argumental.",
+          },
+          {
+            question: "Como se conectan los arcos con los hitos?",
+            answer:
+              "Cada arco tiene un hito de origen y un hito de destino. El hito de origen marca donde nace la trama y el de destino donde se cierra. Asi el arco queda anclado a la estructura temporal de tu novela.",
           },
           {
             question: "Puedo usar una estructura diferente a planteamiento/nudo/desenlace?",
             answer:
-              "La estructura de tres partes es flexible. Puedes adaptar cada seccion a tu metodo: acto I/II/III, setup/confrontation/resolution, o cualquier variacion que prefieras.",
-          },
-          {
-            question: "Como conecto un arco con las escenas?",
-            answer:
-              "Los arcos se vinculan a personajes, y los personajes se vinculan a escenas. Asi, puedes rastrear como cada arco se desarrolla a traves de las escenas de tu novela.",
+              "La estructura de tres partes es flexible. Puedes adaptar cada seccion a tu metodo: acto I/II/III, setup/confrontation/resolution, o cualquier variacion que prefieras. Los nombres son orientativos.",
           },
         ]}
       />
 
       <CTASection
-        title="Estructura tus tramas desde hoy"
-        subtitle="Cada arco narrativo merece un planteamiento, un nudo y un desenlace. Empieza gratis."
+        title="Estructura tus tramas con proposito"
+        subtitle="Cada arco merece un planteamiento, un conflicto y una resolucion clara. Empieza gratis."
       />
     </>
   );

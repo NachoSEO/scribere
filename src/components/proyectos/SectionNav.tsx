@@ -15,8 +15,8 @@ const sectionGroups: SectionGroup[] = [
   {
     header: "Elementos",
     items: [
-      { href: "personajes", label: "Personajes" },
       { href: "facciones", label: "Facciones" },
+      { href: "personajes", label: "Personajes" },
       { href: "lugares", label: "Lugares" },
       { href: "eventos", label: "Eventos" },
     ],
@@ -24,7 +24,16 @@ const sectionGroups: SectionGroup[] = [
   {
     header: "Estructura",
     items: [
-      { href: "estructura", label: "Estructura" },
+      { href: "estructura", label: "Columna" },
+      { href: "hitos", label: "Hitos" },
+      { href: "arcos", label: "Arcos" },
+      { href: "escenas", label: "Escenas" },
+    ],
+  },
+  {
+    header: "Escritura",
+    items: [
+      { href: "manuscrito", label: "Manuscrito" },
     ],
   },
 ];
@@ -64,9 +73,9 @@ export function SectionNav({ projectId, projectName }: SectionNavProps) {
             )}
             {group.items.map((section) => {
               const href = `${basePath}/${section.href}`;
-              const estructuraRoutes = ["estructura", "arcos", "hitos", "escenas", "fases"];
+              const estructuraGroupRoutes = ["estructura", "fases"];
               const isActive = section.href === "estructura"
-                ? estructuraRoutes.some((r) => pathname === `${basePath}/${r}` || pathname.startsWith(`${basePath}/${r}/`))
+                ? estructuraGroupRoutes.some((r) => pathname === `${basePath}/${r}` || pathname.startsWith(`${basePath}/${r}/`))
                 : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <Link

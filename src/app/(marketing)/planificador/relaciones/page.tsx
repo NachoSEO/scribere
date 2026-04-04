@@ -5,9 +5,9 @@ import { InternalLinkBanner } from "@/components/marketing/InternalLinkBanner";
 import { FAQSection } from "@/components/marketing/FAQSection";
 
 export const metadata: Metadata = {
-  title: "Relaciones - Scritura | Herramienta para escritores",
+  title: "Relaciones entre personajes - Scritura | Planificador",
   description:
-    "Visualiza las relaciones entre personajes de tu novela. Alianzas, rivalidades, romances y traiciones. Construye dinamicas creibles y complejas.",
+    "Visualiza las relaciones entre personajes de tu novela. Protectores, enemigos ideologicos, mentores falsos. Construye dinamicas complejas y coherentes.",
 };
 
 function RelationshipDiagramMock() {
@@ -16,79 +16,107 @@ function RelationshipDiagramMock() {
       <h3 className="mb-5 text-center text-sm font-bold text-[var(--color-ink)]">
         Red de relaciones
       </h3>
-      <div className="relative mx-auto" style={{ height: 280, maxWidth: 400 }}>
+      <div className="relative mx-auto" style={{ height: 320, maxWidth: 420 }}>
         {/* SVG lines connecting characters */}
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 280">
-          {/* Elena - Marco */}
-          <line x1="200" y1="40" x2="80" y2="140" stroke="var(--color-border)" strokeWidth="1.5" />
-          {/* Elena - Sofia */}
-          <line x1="200" y1="40" x2="320" y2="140" stroke="var(--color-accent)" strokeWidth="1.5" />
-          {/* Elena - Don Ramon */}
-          <line x1="200" y1="40" x2="200" y2="220" stroke="var(--color-border)" strokeWidth="1.5" strokeDasharray="4 3" />
-          {/* Marco - Don Ramon */}
-          <line x1="80" y1="140" x2="200" y2="220" stroke="var(--color-border)" strokeWidth="1.5" />
-          {/* Sofia - Don Ramon */}
-          <line x1="320" y1="140" x2="200" y2="220" stroke="var(--color-border)" strokeWidth="1.5" strokeDasharray="4 3" />
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 420 320">
+          {/* Lyra - Kael: solid accent (protector) */}
+          <line x1="210" y1="130" x2="60" y2="160" stroke="var(--color-accent)" strokeWidth="1.5" />
+          {/* Lyra - Vael: dashed red (enemiga ideologica) */}
+          <line x1="210" y1="130" x2="360" y2="160" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 3" />
+          {/* Lyra - Nira: solid emerald (guia) */}
+          <line x1="210" y1="130" x2="340" y2="40" stroke="#10b981" strokeWidth="1.5" />
+          {/* Lyra - Aldric: dashed accent (mentor falso) */}
+          <line x1="210" y1="130" x2="210" y2="270" stroke="var(--color-accent)" strokeWidth="1.5" strokeDasharray="4 3" />
+          {/* Kael - Vael: solid red (enfrentados) */}
+          <line x1="60" y1="160" x2="360" y2="160" stroke="#ef4444" strokeWidth="1.5" />
         </svg>
 
-        {/* Character nodes */}
-        <div className="absolute left-1/2 top-0 -translate-x-1/2">
+        {/* Lyra - center */}
+        <div className="absolute left-1/2 top-20 -translate-x-1/2">
           <div className="flex flex-col items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)] text-xs font-bold text-white">
-              EM
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#8b6f47] text-sm font-bold text-white shadow-md">
+              L
             </div>
-            <span className="mt-1 text-xs font-semibold text-[var(--color-ink)]">Elena</span>
-          </div>
-        </div>
-
-        <div className="absolute left-4 top-28">
-          <div className="flex flex-col items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-cream-dark)] text-xs font-bold text-[var(--color-ink-muted)]">
-              MC
-            </div>
-            <span className="mt-1 text-xs font-semibold text-[var(--color-ink)]">Marco</span>
-            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700">
-              Aliado / Traidor
+            <span className="mt-1.5 text-xs font-bold text-[var(--color-ink)]">Lyra</span>
+            <span className="rounded-full bg-[var(--color-cream-dark)] px-2 py-0.5 text-[9px] font-medium text-[var(--color-ink-muted)]">
+              Protagonista
             </span>
           </div>
         </div>
 
-        <div className="absolute right-4 top-28">
+        {/* Kael - left */}
+        <div className="absolute left-0 top-28">
           <div className="flex flex-col items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-cream-dark)] text-xs font-bold text-[var(--color-ink-muted)]">
-              SM
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#8b6f47] text-xs font-bold text-white">
+              K
             </div>
-            <span className="mt-1 text-xs font-semibold text-[var(--color-ink)]">Sofia</span>
-            <span className="rounded-full bg-[var(--color-accent)]/10 px-1.5 py-0.5 text-[10px] text-[var(--color-accent)]">
-              Hermanas
+            <span className="mt-1 text-xs font-semibold text-[var(--color-ink)]">Kael</span>
+            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">
+              Protector &rarr; Companero
+            </span>
+            <span className="mt-0.5 text-[8px] text-[var(--color-ink-muted)]">Orden del Cristal</span>
+          </div>
+        </div>
+
+        {/* Maestra Vael - right */}
+        <div className="absolute right-0 top-28">
+          <div className="flex flex-col items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#cc853d] text-xs font-bold text-white">
+              V
+            </div>
+            <span className="mt-1 text-xs font-semibold text-[var(--color-ink)]">Maestra Vael</span>
+            <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-medium text-red-700">
+              Enemiga ideologica
+            </span>
+            <span className="mt-0.5 text-[8px] text-[var(--color-ink-muted)]">Los Despertadores</span>
+          </div>
+        </div>
+
+        {/* Nira - top-right */}
+        <div className="absolute right-8 top-0">
+          <div className="flex flex-col items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#589b9b] text-xs font-bold text-white">
+              N
+            </div>
+            <span className="mt-1 text-xs font-semibold text-[var(--color-ink)]">Nira</span>
+            <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-medium text-emerald-700">
+              Guia espiritual
             </span>
           </div>
         </div>
 
+        {/* Aldric - bottom */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
           <div className="flex flex-col items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-cream-dark)] text-xs font-bold text-[var(--color-ink-muted)]">
-              DR
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#93709e] text-xs font-bold text-white">
+              A
             </div>
-            <span className="mt-1 text-xs font-semibold text-[var(--color-ink)]">Don Ramon</span>
-            <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] text-red-700">
-              Sospechoso
+            <span className="mt-1 text-xs font-semibold text-[var(--color-ink)]">Aldric</span>
+            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">
+              Mentor falso
             </span>
+            <span className="mt-0.5 text-[8px] text-[var(--color-ink-muted)]">Orden del Cristal</span>
           </div>
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-[var(--color-ink-muted)]">
-        <div className="flex items-center gap-1">
-          <div className="h-px w-4 bg-[var(--color-border)]" />
-          <span>Relacion directa</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="h-px w-4 border-t border-dashed border-[var(--color-border)]" />
-          <span>Relacion tensa</span>
-        </div>
+
+      {/* Legend */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-[10px] text-[var(--color-ink-muted)]">
         <div className="flex items-center gap-1">
           <div className="h-px w-4 bg-[var(--color-accent)]" />
-          <span>Vinculo familiar</span>
+          <span>Vinculo positivo</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="h-px w-4 bg-[#ef4444]" />
+          <span>Conflicto</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="h-px w-4 bg-[#10b981]" />
+          <span>Guia / Mentor</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="h-px w-4 border-t border-dashed border-[var(--color-ink-muted)]" />
+          <span>Relacion ambigua</span>
         </div>
       </div>
     </div>
@@ -107,15 +135,15 @@ export default function RelacionesPage() {
             <span className="text-[var(--color-accent)]">entre personajes</span>
           </>
         }
-        subtitle="Alianzas, rivalidades, romances, traiciones. Las relaciones son el tejido emocional de tu novela. Mapealas para crear dinamicas ricas y coherentes."
+        subtitle="Protectores, enemigos ideologicos, mentores falsos, guias espirituales. Las relaciones son el tejido emocional de tu novela. Mapealas para que cada interaccion tenga peso."
       />
 
-      {/* Mock UI */}
+      {/* Relationship diagram */}
       <section className="px-8 pb-20">
         <RelationshipDiagramMock />
       </section>
 
-      {/* Por que necesitas esto */}
+      {/* Por que necesitas mapear relaciones */}
       <section className="border-y border-[var(--color-border)] bg-white px-8 py-20">
         <div className="mx-auto max-w-3xl">
           <h2 className="mb-6 text-center text-2xl font-bold text-[var(--color-ink)]">
@@ -124,18 +152,17 @@ export default function RelacionesPage() {
           <div className="space-y-4 text-sm leading-relaxed text-[var(--color-ink-light)]">
             <p>
               Las relaciones entre personajes son lo que convierte una lista de
-              nombres en un elenco vivo. Cada relacion genera expectativas en el
-              lector: cuando dos rivales estan juntos en una escena, hay tension.
-              Cuando dos aliados se traicionan, hay drama. Cuando un romance se
-              rompe, hay emocion.
+              nombres en un elenco vivo. Cuando Lyra y Vael coinciden en una escena,
+              hay tension ideologica. Cuando Kael se interpone entre ambas, hay
+              lealtad en conflicto. Cuando Aldric aconseja a Lyra, el lector que
+              sabe la verdad siente la amenaza.
             </p>
             <p>
-              El problema surge cuando el elenco crece. Con seis personajes ya hay
-              quince posibles relaciones. Con diez, cuarenta y cinco. Sin un mapa
-              visual, es imposible recordar quien conoce a quien, quien se odia con
-              quien y que secretos comparten. El mapa de relaciones de Scritura te
-              da esa vision de conjunto para que cada interaccion entre personajes
-              sea intencional y coherente.
+              El problema surge cuando el elenco crece. Con cinco personajes ya hay
+              diez posibles relaciones. Con diez, cuarenta y cinco. Sin un mapa
+              visual, es imposible recordar quien conoce a quien, quien se enfrenta
+              con quien y que secretos comparten. El mapa de relaciones de Scritura
+              te da esa vision de conjunto para que cada interaccion sea intencional.
             </p>
           </div>
         </div>
@@ -157,8 +184,8 @@ export default function RelacionesPage() {
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
                 Elige los dos personajes entre los que quieres definir una
-                relacion. Pueden ser del mismo grupo, de facciones rivales o no
-                tener ninguna conexion previa.
+                relacion. Lyra y Kael, Lyra y Vael, Kael y Aldric. Pueden ser
+                del mismo grupo o de facciones enfrentadas.
               </p>
             </div>
             <div className="text-center">
@@ -166,12 +193,13 @@ export default function RelacionesPage() {
                 2
               </div>
               <h3 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
-                Define la relacion
+                Describe el vinculo
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Describe el tipo de vinculo: familiar, romantico, profesional,
-                rival, mentor/aprendiz. Anade notas sobre como evoluciona la
-                relacion a lo largo de la historia.
+                Define el tipo de relacion y como evoluciona. Kael empieza como
+                protector de Lyra y acaba como companero. Aldric parece un
+                mentor, pero oculta sus propios intereses. Cada relacion puede
+                cambiar a lo largo de la historia.
               </p>
             </div>
             <div className="text-center">
@@ -182,9 +210,10 @@ export default function RelacionesPage() {
                 Visualiza la red
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Ve todas las relaciones de tu novela en un diagrama visual.
-                Identifica personajes aislados, triangulos dramaticos y nudos de
-                tension que puedes explotar en la narrativa.
+                Ve todas las relaciones en un diagrama. Identifica personajes
+                aislados, triangulos de tension y alianzas que podrian romperse.
+                Los colores y tipos de linea te dicen de un vistazo donde esta
+                el conflicto.
               </p>
             </div>
           </div>
@@ -196,18 +225,18 @@ export default function RelacionesPage() {
         links={[
           {
             title: "Personajes",
-            description: "Crea las fichas completas de los personajes antes de definir sus relaciones.",
+            description: "Crea las fichas completas de Lyra, Kael, Vael y el resto del elenco.",
             href: "/planificador/personajes",
           },
           {
             title: "Facciones",
-            description: "Organiza los personajes en grupos para entender las lealtades colectivas.",
+            description: "Organiza personajes en grupos como la Orden o los Despertadores para entender las lealtades colectivas.",
             href: "/planificador/facciones",
           },
           {
-            title: "Arcos narrativos",
-            description: "Las relaciones evolucionan dentro de los arcos. Conecta ambos para mayor coherencia.",
-            href: "/planificador/arcos-narrativos",
+            title: "Manuscrito",
+            description: "Las relaciones cobran vida en las escenas. Escribe tu manuscrito con los personajes conectados.",
+            href: "/planificador/manuscrito",
           },
         ]}
       />
@@ -217,29 +246,29 @@ export default function RelacionesPage() {
           {
             question: "Puedo definir relaciones que cambian durante la novela?",
             answer:
-              "Si. Puedes anotar como evoluciona cada relacion. Dos personajes pueden empezar como aliados y acabar como enemigos, reflejando la complejidad de la trama.",
+              "Si. Puedes anotar como evoluciona cada relacion. Kael empieza como protector de Lyra y acaba como companero de lucha. Aldric empieza como mentor y acaba como antagonista. La evolucion queda documentada.",
           },
           {
             question: "Hay un limite de relaciones por personaje?",
             answer:
-              "No. Un personaje puede tener tantas relaciones como necesites. Los protagonistas suelen tener muchas conexiones, mientras que los secundarios pueden tener solo una o dos.",
+              "No. Un personaje puede tener tantas relaciones como necesites. Lyra tiene vinculos con Kael, Vael, Nira y Aldric, cada uno con una dinamica distinta. Los protagonistas suelen acumular mas conexiones.",
           },
           {
             question: "Puedo ver las relaciones de un solo personaje?",
             answer:
-              "Si. Desde la ficha de cada personaje puedes ver todas sus relaciones. Tambien puedes ver el mapa completo de relaciones de todo el proyecto.",
+              "Si. Desde la ficha de cada personaje puedes ver todas sus relaciones. Tambien puedes ver el mapa completo de todo el proyecto para detectar patrones y personajes desconectados.",
           },
           {
-            question: "Las relaciones se conectan con las escenas?",
+            question: "Como se relacionan las relaciones con las facciones?",
             answer:
-              "Las relaciones se definen entre personajes, y los personajes se vinculan a escenas. Asi puedes saber que dinamicas estan en juego en cada escena de tu novela.",
+              "Las facciones definen lealtades colectivas. Las relaciones definen vinculos individuales. Kael y Vael pertenecen a facciones enemigas, pero su relacion personal tiene matices propios. Ambos sistemas se complementan.",
           },
         ]}
       />
 
       <CTASection
         title="Mapea las dinamicas de tu novela"
-        subtitle="Alianzas, rivalidades, secretos compartidos. Todo visible de un vistazo."
+        subtitle="Protectores, rivales, mentores falsos. Todo visible en un diagrama que revela la red emocional de tu historia."
       />
     </>
   );

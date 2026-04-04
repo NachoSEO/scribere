@@ -1,34 +1,42 @@
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/marketing/HeroSection";
 import { CTASection } from "@/components/marketing/CTASection";
+import { FeatureShowcase } from "@/components/marketing/FeatureShowcase";
 import { InternalLinkBanner } from "@/components/marketing/InternalLinkBanner";
 import { FAQSection } from "@/components/marketing/FAQSection";
+import { MockMentionInText } from "@/components/marketing/mocks";
 
 export const metadata: Metadata = {
-  title: "Escenas - Scritura | Herramienta para escritores",
+  title: "Escenas con editor y @menciones - Scritura | Planificador",
   description:
-    "Escribe y organiza cada escena de tu novela con resumen, objetivo narrativo y personajes vinculados. Las piezas que construyen tu historia.",
+    "Escribe y organiza cada escena de tu novela con resumen, objetivo narrativo, personajes vinculados y @menciones en el contenido. Construye tu historia escena a escena.",
 };
 
 function SceneCardsMock() {
   const scenes = [
     {
-      title: "Llegada al pueblo",
-      summary: "Elena baja del autobus en la plaza del pueblo despues de diez anos. Todo parece igual, pero nada lo es.",
-      objective: "Establecer el tono y presentar el escenario",
-      characters: ["Elena", "Don Ramon"],
+      title: "Amanecer en los talleres",
+      summary:
+        "Lyra llega a los talleres al alba. Los cristales de la boveda han perdido brillo esta temporada y nadie sabe por que.",
+      objective:
+        "Establecer la rutina de Lyra y plantar la semilla del oscurecimiento",
+      characters: ["Lyra"],
     },
     {
-      title: "La carta anonima",
-      summary: "En la habitacion del hostal, Elena relee la carta que la trajo de vuelta. La caligrafia le resulta familiar.",
-      objective: "Plantar la primera pista y crear intriga",
-      characters: ["Elena"],
+      title: "El cristal responde",
+      summary:
+        "Durante la clase de afinacion, un cristal muerto reacciona al contacto de Lyra. La sesion se detiene. Nadie dice nada.",
+      objective:
+        "El incidente incitador: el don de Lyra se manifiesta",
+      characters: ["Lyra", "Maestro Aldric"],
     },
     {
-      title: "Reencuentro con Marco",
-      summary: "Elena se encuentra con Marco en el bar de siempre. El nerviosismo de el confirma que sabe mas de lo que dice.",
-      objective: "Introducir al personaje secundario clave y generar sospecha",
-      characters: ["Elena", "Marco"],
+      title: "Kael en las sombras",
+      summary:
+        "Kael observa desde las gradas superiores. Toma nota de lo que acaba de pasar y abandona la sala antes de que alguien lo vea.",
+      objective:
+        "Presentar al deuteragonista y su conexion con el conflicto",
+      characters: ["Kael"],
     },
   ];
 
@@ -43,14 +51,20 @@ function SceneCardsMock() {
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--color-cream-dark)] text-xs font-bold text-[var(--color-ink-muted)]">
               {index + 1}
             </span>
-            <h3 className="text-sm font-bold text-[var(--color-ink)]">{scene.title}</h3>
+            <h3 className="text-sm font-bold text-[var(--color-ink)]">
+              {scene.title}
+            </h3>
           </div>
           <p className="mb-3 text-xs leading-relaxed text-[var(--color-ink-light)]">
             {scene.summary}
           </p>
           <div className="mb-2">
-            <span className="text-xs font-semibold text-[var(--color-ink-muted)]">Objetivo: </span>
-            <span className="text-xs text-[var(--color-ink-light)]">{scene.objective}</span>
+            <span className="text-xs font-semibold text-[var(--color-ink-muted)]">
+              Objetivo:{" "}
+            </span>
+            <span className="text-xs text-[var(--color-ink-light)]">
+              {scene.objective}
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             {scene.characters.map((char) => (
@@ -80,13 +94,24 @@ export default function EscenasPage() {
             <span className="text-[var(--color-accent)]">cada escena</span>
           </>
         }
-        subtitle="Cada escena tiene un proposito. Define el resumen, el objetivo narrativo y los personajes que intervienen. Construye tu novela pieza a pieza."
+        subtitle="Cada escena tiene un resumen, un objetivo narrativo y personajes vinculados. Cuando te sientes a escribir en el editor, puedes mencionar personajes y lugares con @ directamente en el texto."
       />
 
       {/* Mock UI */}
       <section className="px-8 pb-20">
         <SceneCardsMock />
       </section>
+
+      <FeatureShowcase
+        features={[
+          {
+            title: "Menciona personajes y lugares mientras escribes",
+            description:
+              "Dentro del editor de cada escena, escribe @ seguido de un nombre. El sistema sugiere personajes, lugares, facciones y eventos que coincidan. Cada mencion queda marcada con una pastilla de color segun su tipo: marron para personajes, verde azulado para lugares, morado para facciones, naranja para eventos. Un clic en la mencion te lleva a la ficha completa.",
+            visual: <MockMentionInText />,
+          },
+        ]}
+      />
 
       {/* Por que necesitas esto */}
       <section className="border-y border-[var(--color-border)] bg-white px-8 py-20">
@@ -96,18 +121,18 @@ export default function EscenasPage() {
           </h2>
           <div className="space-y-4 text-sm leading-relaxed text-[var(--color-ink-light)]">
             <p>
-              Las escenas son los ladrillos con los que se construye una novela. Cada
-              una debe avanzar la trama, revelar algo del personaje o cambiar las
-              condiciones del conflicto. Si una escena no cumple ninguna de estas
-              funciones, sobra.
+              Las escenas son los ladrillos con los que se construye una novela.
+              Cada una debe avanzar la trama, revelar algo del personaje o
+              cambiar las condiciones del conflicto. Si una escena no cumple
+              ninguna de estas funciones, sobra.
             </p>
             <p>
-              El problema surge cuando escribes sin un plan de escenas. Acabas con
-              capitulos que no avanzan, repeticiones innecesarias y un ritmo
-              irregular. Con el organizador de escenas de Scritura, defines antes de
-              escribir que debe lograr cada escena, quien participa y como conecta
-              con la estructura general. Cuando te sientes a redactar, sabes
-              exactamente que necesitas.
+              El problema aparece cuando escribes sin un plan de escenas. Acabas
+              con capitulos que no avanzan, repeticiones innecesarias y un ritmo
+              irregular. Con el organizador de escenas de Scritura, defines antes
+              de escribir que debe lograr cada escena, quien participa y como
+              conecta con la estructura general. Cuando te sientes a redactar,
+              sabes exactamente que necesitas.
             </p>
           </div>
         </div>
@@ -129,8 +154,8 @@ export default function EscenasPage() {
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
                 Anade un titulo y un resumen breve de lo que ocurre. No necesitas
-                escribir la prosa todavia; basta con una descripcion funcional de la
-                accion.
+                escribir la prosa todavia; basta con una descripcion funcional de
+                la accion.
               </p>
             </div>
             <div className="text-center">
@@ -138,7 +163,7 @@ export default function EscenasPage() {
                 2
               </div>
               <h3 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
-                Define el objetivo
+                Define el objetivo narrativo
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
                 Escribe en una frase que debe lograr esta escena: presentar un
@@ -151,12 +176,12 @@ export default function EscenasPage() {
                 3
               </div>
               <h3 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
-                Vincula personajes
+                Vincula personajes y escribe con @
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Selecciona los personajes que aparecen en la escena. Asi controlas
-                la presencia de cada personaje a lo largo de la novela y evitas
-                incoherencias.
+                Selecciona los personajes que aparecen en la escena. Dentro del
+                editor, usa @menciones para referenciar personajes, lugares y
+                eventos directamente en el texto.
               </p>
             </div>
           </div>
@@ -168,17 +193,20 @@ export default function EscenasPage() {
         links={[
           {
             title: "Hitos",
-            description: "Agrupa escenas bajo hitos narrativos para darles contexto dentro de la estructura.",
+            description:
+              "Agrupa escenas bajo hitos narrativos para darles contexto dentro de la estructura.",
             href: "/planificador/hitos",
           },
           {
-            title: "Personajes",
-            description: "Crea las fichas de los personajes que participan en cada escena.",
-            href: "/planificador/personajes",
+            title: "Manuscrito",
+            description:
+              "Escribe las escenas completas en el editor con @menciones.",
+            href: "/planificador/manuscrito",
           },
           {
             title: "Lugares",
-            description: "Define los escenarios donde transcurren tus escenas para mantener la coherencia.",
+            description:
+              "Define los escenarios donde transcurren tus escenas y marcalos en el mapa.",
             href: "/planificador/lugares",
           },
         ]}
@@ -192,9 +220,9 @@ export default function EscenasPage() {
               "Si. Las escenas se pueden reordenar libremente arrastrando y soltando. Experimentar con el orden es parte del proceso creativo.",
           },
           {
-            question: "Cuanto detalle debo poner en el resumen?",
+            question: "Como funcionan las @menciones dentro de una escena?",
             answer:
-              "Lo suficiente para saber que ocurre sin necesidad de leer la prosa. Una o dos frases suelen bastar: quien hace que, donde y por que importa.",
+              "Escribe @ seguido del nombre de un personaje, lugar, faccion o evento. El editor sugiere coincidencias y las marca con una pastilla de color segun el tipo. Puedes hacer clic en cualquier mencion para ir a su ficha.",
           },
           {
             question: "Puedo vincular una escena a un hito?",
@@ -211,7 +239,7 @@ export default function EscenasPage() {
 
       <CTASection
         title="Organiza cada escena de tu novela"
-        subtitle="De la idea suelta al plan concreto. Empieza a estructurar tus escenas hoy."
+        subtitle="Del resumen al texto con @menciones. Empieza a estructurar tus escenas hoy."
       />
     </>
   );

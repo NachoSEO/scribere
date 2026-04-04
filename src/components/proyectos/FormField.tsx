@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from "react";
+
+const MentionField = lazy(() => import("./MentionField").then(m => ({ default: m.MentionField })));
 
 interface FormFieldProps {
   label: string;
@@ -9,9 +11,10 @@ interface FormFieldProps {
   multiline?: boolean;
   placeholder?: string;
   rows?: number;
+  projectId?: string;
 }
 
-export function FormField({ label, value, onChange, multiline = false, placeholder, rows = 3 }: FormFieldProps) {
+export function FormField({ label, value, onChange, multiline = false, placeholder, rows = 3, projectId }: FormFieldProps) {
   const [local, setLocal] = useState(value);
   const isTyping = useRef(false);
 
@@ -33,6 +36,22 @@ export function FormField({ label, value, onChange, multiline = false, placehold
     },
     [onChange]
   );
+
+  if (projectId) {
+    return (
+      <Suspense fallback={<div className="h-10 rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] animate-pulse" />}>
+        <MentionField
+          label={label}
+          value={value}
+          onChange={onChange}
+          multiline={multiline}
+          placeholder={placeholder}
+          projectId={projectId}
+          rows={rows}
+        />
+      </Suspense>
+    );
+  }
 
   const inputClasses =
     "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors";

@@ -1,46 +1,53 @@
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/marketing/HeroSection";
 import { CTASection } from "@/components/marketing/CTASection";
+import { FeatureShowcase } from "@/components/marketing/FeatureShowcase";
 import { InternalLinkBanner } from "@/components/marketing/InternalLinkBanner";
 import { FAQSection } from "@/components/marketing/FAQSection";
+import { MockEvolutionTimeline } from "@/components/marketing/mocks";
 
 export const metadata: Metadata = {
-  title: "Personajes - Scritura | Herramienta para escritores",
+  title: "Fichas de personajes para novelas - Scritura | Planificador",
   description:
-    "Crea fichas de personajes completas con motivacion, complicacion, funcion narrativa y tipo. Organiza el elenco de tu novela en un solo lugar.",
+    "Crea fichas de personajes con motivacion, complicacion y funcion narrativa. Linea de evolucion vinculada a arcos y escenas. Asigna facciones y rastrea su desarrollo.",
 };
 
 function CharacterCardMock() {
   return (
     <div className="mx-auto max-w-lg rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent)] text-sm font-bold text-white">
-          EM
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8b6f47] text-sm font-bold text-white">
+          L
         </div>
         <div>
-          <h3 className="text-sm font-bold text-[var(--color-ink)]">Elena Marchetti</h3>
-          <span className="rounded-full bg-[var(--color-cream-dark)] px-2 py-0.5 text-xs text-[var(--color-ink-muted)]">
-            Protagonista
-          </span>
+          <h3 className="text-sm font-bold text-[var(--color-ink)]">Lyra</h3>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-[var(--color-cream-dark)] px-2 py-0.5 text-xs text-[var(--color-ink-muted)]">
+              Protagonista
+            </span>
+            <span className="rounded-full bg-[#93709e]/10 px-2 py-0.5 text-xs font-medium text-[#93709e]">
+              Orden del Cristal Eterno
+            </span>
+          </div>
         </div>
       </div>
       <div className="space-y-3">
         <div>
           <p className="mb-1 text-xs font-semibold text-[var(--color-ink-muted)]">Funcion narrativa</p>
           <p className="text-sm text-[var(--color-ink-light)]">
-            Descubrir la verdad sobre la desaparicion de su hermana
+            Cuestionar el monopolio de la Orden sobre la resonancia y abrir el acceso a los cristales
           </p>
         </div>
         <div>
           <p className="mb-1 text-xs font-semibold text-[var(--color-ink-muted)]">Motivacion</p>
           <p className="text-sm text-[var(--color-ink-light)]">
-            Culpa por no haber estado presente la noche de la desaparicion
+            Entender por que el cristal muerto responde a su tacto cuando nadie mas puede activarlo
           </p>
         </div>
         <div>
           <p className="mb-1 text-xs font-semibold text-[var(--color-ink-muted)]">Complicacion</p>
           <p className="text-sm text-[var(--color-ink-light)]">
-            Cada pista la acerca a un secreto que podria destruir a su familia
+            Cada resonancia le cuesta un recuerdo de su infancia. Cuanto mas poder usa, menos sabe quien es
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -48,7 +55,7 @@ function CharacterCardMock() {
             Tipo: Dinamico
           </span>
           <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-2.5 py-1 text-xs text-[var(--color-ink-muted)]">
-            Arco: Transformacion
+            Arco: El cristal muerto
           </span>
         </div>
       </div>
@@ -68,13 +75,24 @@ export default function PersonajesPage() {
             <span className="text-[var(--color-accent)]">que cobran vida</span>
           </>
         }
-        subtitle="Fichas completas con motivacion, complicacion y funcion narrativa. Cada personaje tiene su espacio para crecer junto a tu historia."
+        subtitle="Fichas completas con motivacion, complicacion y funcion narrativa. Linea de evolucion vinculada a arcos y escenas. Asigna cada personaje a su faccion y rastrea como cambia a lo largo de la historia."
       />
 
       {/* Mock UI */}
       <section className="px-8 pb-20">
         <CharacterCardMock />
       </section>
+
+      <FeatureShowcase
+        features={[
+          {
+            title: "Rastrea como evoluciona tu personaje",
+            description:
+              "Cada personaje tiene una linea de evolucion con etapas concretas. Define como cambia Lyra desde aprendiz solitaria hasta lider de la rebelion, con cada etapa vinculada al arco y la escena que la provoca. No es una nota suelta: es un registro que conecta el desarrollo del personaje con la estructura de tu novela.",
+            visual: <MockEvolutionTimeline />,
+          },
+        ]}
+      />
 
       {/* Por que necesitas esto */}
       <section className="border-y border-[var(--color-border)] bg-white px-8 py-20">
@@ -95,7 +113,16 @@ export default function PersonajesPage() {
               sueltos, contradicciones entre capitulos y personajes que se sienten
               planos. El gestor de personajes de Scritura te obliga a pensar en lo
               que importa: motivacion, complicacion y funcion narrativa. Tres campos
-              que transforman una lista de rasgos en un ser humano creible.
+              que convierten una lista de rasgos en un ser humano creible.
+            </p>
+            <p>
+              Ademas, cada personaje tiene su propia linea de evolucion. No basta con
+              saber quien es Lyra al principio: necesitas documentar como el
+              descubrimiento del cristal muerto la cambia, como la alianza con Kael
+              le ensena a confiar, y como el precio de la resonancia la obliga a
+              elegir entre poder y memoria. La linea de evolucion conecta cada cambio
+              con el arco y la escena que lo provoca. Y si Lyra pertenece a la Orden
+              del Cristal Eterno, su ficha lo refleja con la faccion asignada.
             </p>
           </div>
         </div>
@@ -117,8 +144,8 @@ export default function PersonajesPage() {
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
                 Dale un nombre y selecciona el tipo de personaje: protagonista,
-                antagonista, secundario o figurante. Cada tipo te guia hacia los
-                campos mas relevantes.
+                antagonista, secundario o figurante. Asignalo a una faccion si
+                pertenece a alguna organizacion.
               </p>
             </div>
             <div className="text-center">
@@ -139,12 +166,12 @@ export default function PersonajesPage() {
                 3
               </div>
               <h3 className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
-                Conecta con la historia
+                Anade etapas de evolucion
               </h3>
               <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                Vincula al personaje con escenas, arcos narrativos y otros
-                personajes. Asi ves de un vistazo como encaja en el conjunto de tu
-                novela.
+                Documenta como cambia el personaje a lo largo de la historia. Cada
+                etapa se vincula a un arco narrativo y una escena, para que el
+                desarrollo no sea abstracto sino rastreable.
               </p>
             </div>
           </div>
@@ -156,18 +183,18 @@ export default function PersonajesPage() {
         links={[
           {
             title: "Arcos narrativos",
-            description: "Disena el arco de transformacion de cada personaje con planteamiento, nudo y desenlace.",
+            description: "Disena el arco de cada personaje con planteamiento, nudo, desenlace y resolucion YBNA.",
             href: "/planificador/arcos-narrativos",
           },
           {
-            title: "Relaciones",
-            description: "Visualiza las conexiones entre personajes y como evolucionan a lo largo de la trama.",
-            href: "/planificador/relaciones",
+            title: "Facciones",
+            description: "Organiza la Orden del Cristal Eterno, los Despertadores y cada grupo de tu novela.",
+            href: "/planificador/facciones",
           },
           {
-            title: "Escenas",
-            description: "Vincula personajes a cada escena para saber quien interviene y con que objetivo.",
-            href: "/planificador/escenas",
+            title: "Manuscrito",
+            description: "Menciona personajes con @ mientras escribes para mantener todo conectado.",
+            href: "/planificador/manuscrito",
           },
         ]}
       />
@@ -180,26 +207,26 @@ export default function PersonajesPage() {
               "No hay limite. Puedes crear tantos personajes como necesite tu historia, desde el protagonista hasta los figurantes.",
           },
           {
-            question: "Puedo vincular un personaje a varias escenas?",
+            question: "Como funciona la linea de evolucion?",
             answer:
-              "Si. Cada personaje puede estar vinculado a multiples escenas, arcos narrativos y relaciones. Veras todas las conexiones desde su ficha.",
+              "Cada personaje tiene una lista de etapas ordenadas cronologicamente. Cada etapa describe un cambio concreto y se vincula al arco narrativo y la escena que lo provoca. Asi puedes rastrear como un personaje pasa de aprendiz solitaria a lider de una rebelion.",
           },
           {
-            question: "Que diferencia hay entre motivacion y complicacion?",
+            question: "Puedo asignar un personaje a varias facciones?",
             answer:
-              "La motivacion es lo que el personaje quiere conseguir. La complicacion es el obstaculo interno o externo que se lo impide. Juntas crean tension narrativa.",
+              "Cada personaje pertenece a una faccion principal. Si cambia de bando durante la historia, puedes reflejarlo en su linea de evolucion y crear una nueva etapa que documente el cambio.",
           },
           {
-            question: "Puedo anadir campos personalizados a la ficha?",
+            question: "Puedo subir una imagen del personaje?",
             answer:
-              "La ficha incluye los campos esenciales para la narrativa. Puedes usar el campo de notas para anadir informacion adicional como rasgos fisicos, backstory o detalles secundarios.",
+              "Todavia no, pero esta en el roadmap. Por ahora, cada personaje se identifica con sus iniciales y el color de su faccion.",
           },
         ]}
       />
 
       <CTASection
         title="Dale vida a tus personajes"
-        subtitle="Crea fichas completas y conectalas con el resto de tu novela. Gratis."
+        subtitle="Crea fichas con evolucion, facciones y conexiones a toda tu novela. Gratis."
       />
     </>
   );

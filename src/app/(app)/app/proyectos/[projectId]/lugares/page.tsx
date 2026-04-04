@@ -2,10 +2,12 @@
 
 import { use, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useLugares } from "@/lib/proyectos/hooks";
+import { useLugares, useLugarMapa } from "@/lib/proyectos/hooks";
 import { LUGAR_TIPOS } from "@/types/proyectos";
-import type { Lugar, LugarTipo } from "@/types/proyectos";
+import type { Lugar, LugarTipo, LugarPin } from "@/types/proyectos";
 import { EmptyState } from "@/components/proyectos/EmptyState";
+import { MapaPins } from "@/components/proyectos/MapaPins";
+import type { LugarPreviewData } from "@/components/proyectos/MapaPins";
 
 const TIPO_COLORS: Record<string, string> = {
   mundo: "#dbeafe",
@@ -28,6 +30,90 @@ const TIPO_ICONS: Record<string, string> = {
   edificio: "🏛️",
   otro: "📍",
 };
+
+function WorldMap({
+  mundo,
+  lugares,
+  projectId,
+}: {
+  mundo: Lugar;
+  lugares: Lugar[];
+  projectId: string;
+}) {
+  const router = useRouter();
+  const { uploadMapa, removeMapa, savePins } = useLugarMapa(mundo.id);
+  const [uploading, setUploading] = useState(false);
+
+  // All descendants (not just direct children) for pin selection
+  const allDescendants = useMemo(() => {
+    const result: Lugar[] = [];
+    const stack = [mundo.id];
+    while (stack.length > 0) {
+      const parentId = stack.pop()!;
+      for (const l of lugares) {
+        if (l.lugar_padre_id === parentId) {
+          result.push(l);
+          stack.push(l.id);
+        }
+      }
+    }
+    return result;
+  }, [lugares, mundo.id]);
+
+  const lugarPreviews: LugarPreviewData[] = useMemo(
+    () =>
+      allDescendants.map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        descripcion: c.descripcion,
+        tipo: c.tipo,
+        mapa_url: c.mapa_url,
+      })),
+    [allDescendants]
+  );
+
+  const handleUpload = useCallback(
+    async (file: File) => {
+      setUploading(true);
+      try {
+        await uploadMapa(file);
+      } finally {
+        setUploading(false);
+      }
+    },
+    [uploadMapa]
+  );
+
+  const handlePinsChange = useCallback(
+    (pins: LugarPin[]) => {
+      savePins(pins);
+    },
+    [savePins]
+  );
+
+  const handlePinClick = useCallback(
+    (lugarId: string) => {
+      router.push(`/app/proyectos/${projectId}/lugares/${lugarId}`);
+    },
+    [projectId, router]
+  );
+
+  return (
+    <div className="mb-6">
+      <MapaPins
+        mapaUrl={mundo.mapa_url}
+        pins={mundo.mapa_pins ?? []}
+        lugares={allDescendants.map((c) => ({ id: c.id, nombre: c.nombre }))}
+        lugarPreviews={lugarPreviews}
+        onPinsChange={handlePinsChange}
+        onPinClick={handlePinClick}
+        onUpload={handleUpload}
+        onRemoveMap={removeMapa}
+        uploading={uploading}
+      />
+    </div>
+  );
+}
 
 export default function LugaresPage({
   params,
@@ -90,6 +176,12 @@ export default function LugaresPage({
     setNombre("");
     router.push(`/app/proyectos/${projectId}/lugares/${entity.id}`);
   }, [nombre, create, viewParentId, projectId, router]);
+
+  // Find the main map lugar (es_mapa_principal flag, fallback to root "mundo" type)
+  const mundoLugar = useMemo(
+    () => lugares.find((l) => l.es_mapa_principal && l.mapa_url) ?? lugares.find((l) => l.tipo === "mundo" && !l.lugar_padre_id && l.mapa_url) ?? null,
+    [lugares]
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleCreate();
@@ -180,6 +272,17 @@ export default function LugaresPage({
           >
             Cancelar
           </button>
+        </div>
+      )}
+
+      {/* World map (shown at root level when a "mundo" lugar exists) */}
+      {!viewParentId && mundoLugar && (
+        <div className="mt-4">
+          <WorldMap
+            mundo={mundoLugar}
+            lugares={lugares}
+            projectId={projectId}
+          />
         </div>
       )}
 

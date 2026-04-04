@@ -2,10 +2,14 @@
 
 import { use, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useArco, useArcos, useHitos } from "@/lib/proyectos/hooks";
+import { useArco, useArcos, useHitos, useArcoPersonajes, usePersonajes } from "@/lib/proyectos/hooks";
 import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { TIPO_RESOLUCION_OPTIONS } from "@/types/proyectos";
+import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
+import { LinkedEntities } from "@/components/proyectos/LinkedEntities";
+import { EntityPreviewPanel } from "@/components/proyectos/EntityPreviewPanel";
+import type { MentionType } from "@/lib/proyectos/entity-config";
 
 const fields: FieldConfig[] = [
   { key: "nombre", label: "Nombre", placeholder: "Nombre del arco narrativo" },
@@ -25,6 +29,31 @@ export default function ArcoDetailPage({
   const { remove } = useArcos(projectId);
   const { hitos } = useHitos(projectId);
   const [showDelete, setShowDelete] = useState(false);
+  const [previewEntity, setPreviewEntity] = useState<{ id: string; type: MentionType } | null>(null);
+
+  const { personajes } = usePersonajes(projectId);
+  const apLinks = useArcoPersonajes(arcoId);
+
+  const personajeIds = useMemo(() => apLinks.links.map((l) => l.personaje_id), [apLinks.links]);
+  const personajeJunctionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of apLinks.links) map.set(l.personaje_id, l.id);
+    return map;
+  }, [apLinks.links]);
+
+  // Derive lugares from connected hitos
+  const lugarIds = useMemo(() => {
+    const ids: string[] = [];
+    if (arco?.hito_origen_id) {
+      const h = hitos.find((h) => h.id === arco.hito_origen_id);
+      if (h?.lugar_id) ids.push(h.lugar_id);
+    }
+    if (arco?.hito_destino_id) {
+      const h = hitos.find((h) => h.id === arco.hito_destino_id);
+      if (h?.lugar_id) ids.push(h.lugar_id);
+    }
+    return [...new Set(ids)];
+  }, [arco, hitos]);
 
   const values = useMemo((): Record<string, string> => {
     if (!arco) return {};
@@ -63,7 +92,7 @@ export default function ArcoDetailPage({
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
       <div className="mt-6 space-y-6">
-        <EntityForm fields={fields} values={values} onChange={handleChange} />
+        <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
 
         {/* Tipo resolución (YBNA) */}
         <div className="space-y-1.5">
@@ -121,6 +150,25 @@ export default function ArcoDetailPage({
             ))}
           </select>
         </div>
+
+        {/* Personajes */}
+        <JunctionSelector
+          label="Personajes involucrados"
+          linkedIds={personajeIds}
+          options={personajes}
+          onAdd={apLinks.add}
+          onRemove={apLinks.remove}
+          junctionMap={personajeJunctionMap}
+        />
+
+        {/* Linked entities summary */}
+        <LinkedEntities
+          projectId={projectId}
+          personajeIds={personajeIds}
+          lugarIds={lugarIds}
+          eventoIds={[]}
+          onEntityClick={(id, type) => setPreviewEntity({ id, type: type as MentionType })}
+        />
       </div>
 
       {showDelete && (
@@ -128,6 +176,15 @@ export default function ArcoDetailPage({
           entityName="arco"
           onConfirm={handleDelete}
           onCancel={() => setShowDelete(false)}
+        />
+      )}
+
+      {previewEntity && (
+        <EntityPreviewPanel
+          entityId={previewEntity.id}
+          entityType={previewEntity.type}
+          projectId={projectId}
+          onClose={() => setPreviewEntity(null)}
         />
       )}
     </div>

@@ -3,7 +3,10 @@
 import { use, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useLugar, useLugares, useLugarMapa } from "@/lib/proyectos/hooks";
+import { useLugar, useLugares, useLugarMapa, useEscenas } from "@/lib/proyectos/hooks";
+import { useProyectosStore } from "@/lib/proyectos/store";
+import { updateLugar as updateLugarQuery } from "@/lib/proyectos/queries";
+import { createClient } from "@/lib/supabase/client";
 import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { MapaPins } from "@/components/proyectos/MapaPins";
@@ -40,16 +43,39 @@ export default function LugarDetailPage({
   const { projectId, lugarId } = use(params);
   const router = useRouter();
   const { lugar, save } = useLugar(lugarId);
-  const { lugares, remove } = useLugares(projectId);
+  const { lugares, remove, create: createLugar } = useLugares(projectId);
   const { uploadMapa, removeMapa, savePins } = useLugarMapa(lugarId);
+  const { escenas } = useEscenas(projectId);
   const [showDelete, setShowDelete] = useState(false);
   const [uploadingMapa, setUploadingMapa] = useState(false);
+
+  // Escenas set in this lugar
+  const escenasDelLugar = useMemo(
+    () => escenas.filter((e) => e.lugar_id === lugarId),
+    [escenas, lugarId]
+  );
 
   // Children of this lugar
   const children = useMemo(
     () => lugares.filter((l) => l.lugar_padre_id === lugarId),
     [lugares, lugarId]
   );
+
+  // All descendants (for map pins)
+  const allDescendants = useMemo(() => {
+    const result: typeof lugares = [];
+    const stack = [lugarId];
+    while (stack.length > 0) {
+      const parentId = stack.pop()!;
+      for (const l of lugares) {
+        if (l.lugar_padre_id === parentId) {
+          result.push(l);
+          stack.push(l.id);
+        }
+      }
+    }
+    return result;
+  }, [lugares, lugarId]);
 
   // Available parents (all except self and own descendants)
   const getDescendantIds = useCallback(
@@ -138,6 +164,27 @@ export default function LugarDetailPage({
     },
     [projectId, router]
   );
+
+  const updateLugarInList = useProyectosStore((s) => s.updateLugarInList);
+
+  const handleToggleMapaPrincipal = useCallback(async () => {
+    const sb = createClient();
+    // Desactivar otros mapas principales del proyecto
+    if (!lugar?.es_mapa_principal) {
+      for (const l of lugares) {
+        if (l.es_mapa_principal && l.id !== lugarId) {
+          const updated = await updateLugarQuery(sb, l.id, { es_mapa_principal: false });
+          updateLugarInList(updated);
+        }
+      }
+    }
+    save({ es_mapa_principal: !lugar?.es_mapa_principal });
+  }, [lugar?.es_mapa_principal, lugares, lugarId, save, updateLugarInList]);
+
+  const handleCreateSublugar = useCallback(async () => {
+    const newLugar = await createLugar({ nombre: "Nuevo sublugar", lugar_padre_id: lugarId });
+    router.push(`/app/proyectos/${projectId}/lugares/${newLugar.id}`);
+  }, [createLugar, lugarId, projectId, router]);
 
   if (!lugar)
     return (
@@ -257,13 +304,14 @@ export default function LugarDetailPage({
         </div>
 
         {/* Name and description */}
-        <EntityForm fields={fields} values={values} onChange={handleChange} />
+        <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
 
         {/* Map */}
         <MapaPins
           mapaUrl={lugar.mapa_url}
           pins={lugar.mapa_pins ?? []}
-          lugares={children.map((c) => ({ id: c.id, nombre: c.nombre }))}
+          lugares={allDescendants.map((c) => ({ id: c.id, nombre: c.nombre }))}
+          lugarPreviews={allDescendants.map((c) => ({ id: c.id, nombre: c.nombre, descripcion: c.descripcion, tipo: c.tipo }))}
           onPinsChange={handlePinsChange}
           onPinClick={handlePinClick}
           onUpload={handleUploadMapa}
@@ -271,12 +319,36 @@ export default function LugarDetailPage({
           uploading={uploadingMapa}
         />
 
+        {/* Mapa principal toggle */}
+        {lugar.mapa_url && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleToggleMapaPrincipal}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all border ${
+                lugar.es_mapa_principal
+                  ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+                  : "border-[var(--color-border)] text-[var(--color-ink-muted)] hover:border-[var(--color-accent-light)]"
+              }`}
+            >
+              {lugar.es_mapa_principal ? "★ Mapa principal" : "Marcar como mapa principal"}
+            </button>
+          </div>
+        )}
+
         {/* Children */}
-        {children.length > 0 && (
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-2">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium">
               Sublugares ({children.length})
             </p>
+            <button
+              onClick={handleCreateSublugar}
+              className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors"
+            >
+              + Crear sublugar
+            </button>
+          </div>
+          {children.length > 0 ? (
             <div className="space-y-1.5">
               {children.map((child) => (
                 <Link
@@ -305,8 +377,39 @@ export default function LugarDetailPage({
                 </Link>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-[var(--color-ink-muted)] italic">Sin sublugares</p>
+          )}
+        </div>
+
+        {/* Escenas */}
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-2">
+            Escenas ({escenasDelLugar.length})
+          </p>
+          {escenasDelLugar.length === 0 ? (
+            <p className="text-xs text-[var(--color-ink-muted)] italic">Ninguna escena transcurre en este lugar</p>
+          ) : (
+            <div className="space-y-1.5">
+              {escenasDelLugar.map((esc) => (
+                <Link
+                  key={esc.id}
+                  href={`/app/proyectos/${projectId}/escenas/${esc.id}`}
+                  className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-white p-3 text-left transition-colors hover:border-[var(--color-accent-light)] hover:bg-[var(--color-cream)]"
+                >
+                  <span className="text-sm text-[var(--color-ink)]">
+                    {esc.resumen || <span className="italic text-[var(--color-ink-muted)]">Sin resumen</span>}
+                  </span>
+                  {esc.objetivo && (
+                    <span className="ml-auto text-xs text-[var(--color-ink-muted)] line-clamp-1 max-w-[200px]">
+                      {esc.objetivo}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {showDelete && (

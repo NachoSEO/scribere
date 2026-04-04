@@ -10,6 +10,9 @@ import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm"
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
 import { EscenaEditor } from "@/components/proyectos/EscenaEditor";
+import { LinkedEntities } from "@/components/proyectos/LinkedEntities";
+import { EntityPreviewPanel } from "@/components/proyectos/EntityPreviewPanel";
+import type { MentionType } from "@/lib/proyectos/entity-config";
 import { useDebouncedSave } from "@/lib/hooks/use-debounced-save";
 
 const fields: FieldConfig[] = [
@@ -32,6 +35,7 @@ export default function EscenaDetailPage({
   const { personajes } = usePersonajes(projectId);
   const epLinks = useEscenaPersonajes(escenaId);
   const [showDelete, setShowDelete] = useState(false);
+  const [previewEntity, setPreviewEntity] = useState<{ id: string; type: MentionType } | null>(null);
 
   const values = useMemo((): Record<string, string> => {
     if (!escena) return {};
@@ -86,7 +90,7 @@ export default function EscenaDetailPage({
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
       <div className="mt-6 space-y-6">
-        <EntityForm fields={fields} values={values} onChange={handleChange} />
+        <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
 
         {/* FK selectors */}
         <div className="space-y-1.5">
@@ -147,10 +151,20 @@ export default function EscenaDetailPage({
           junctionMap={personajeJunctionMap}
         />
 
+        {/* Linked entities summary */}
+        <LinkedEntities
+          projectId={projectId}
+          personajeIds={personajeIds}
+          lugarIds={escena.lugar_id ? [escena.lugar_id] : []}
+          eventoIds={[]}
+          onEntityClick={(id, type) => setPreviewEntity({ id, type: type as MentionType })}
+        />
+
         {/* Tiptap editor */}
         <EscenaEditor
           content={escena.contenido}
           onChange={debouncedContentChange}
+          projectId={projectId}
         />
       </div>
 
@@ -159,6 +173,15 @@ export default function EscenaDetailPage({
           entityName="escena"
           onConfirm={handleDelete}
           onCancel={() => setShowDelete(false)}
+        />
+      )}
+
+      {previewEntity && (
+        <EntityPreviewPanel
+          entityId={previewEntity.id}
+          entityType={previewEntity.type}
+          projectId={projectId}
+          onClose={() => setPreviewEntity(null)}
         />
       )}
     </div>

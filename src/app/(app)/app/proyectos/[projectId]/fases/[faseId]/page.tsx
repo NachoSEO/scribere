@@ -54,7 +54,7 @@ export default function FaseDetailPage({
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
       <div className="mt-6">
-        <EntityForm fields={fields} values={values} onChange={handleChange} />
+        <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
       </div>
 
       {showDelete && (

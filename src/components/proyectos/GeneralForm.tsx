@@ -123,6 +123,8 @@ export function GeneralForm({ projectId }: GeneralFormProps) {
             label="Tono"
             value={val("tono")}
             onChange={(v) => handleChange("tono", v)}
+            multiline
+            rows={3}
             placeholder="El tono general de la narrativa..."
           />
         </Card>
@@ -131,6 +133,8 @@ export function GeneralForm({ projectId }: GeneralFormProps) {
             label="Estilo"
             value={val("estilo")}
             onChange={(v) => handleChange("estilo", v)}
+            multiline
+            rows={3}
             placeholder="El estilo de escritura..."
           />
         </Card>

@@ -2,14 +2,16 @@
 
 import { use, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useEvento, useEventos, usePersonajes, useLugares, useEventoPersonajes, useEventoLugares } from "@/lib/proyectos/hooks";
+import { useEvento, useEventos, usePersonajes, useLugares, useHitos, useEscenas, useEventoPersonajes, useEventoLugares, useEventoHitos, useEventoEscenas } from "@/lib/proyectos/hooks";
 import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
 
 const fields: FieldConfig[] = [
   { key: "nombre", label: "Nombre", placeholder: "Nombre del evento" },
-  { key: "cronologia", label: "Cronología", placeholder: "Cuándo ocurre este evento..." },
+  { key: "funcion", label: "Función", placeholder: "Qué función cumple este evento en la historia..." },
+  { key: "causa_directa", label: "Causa directa", multiline: true, rows: 3, placeholder: "Qué provoca este evento..." },
+  { key: "consecuencia_directa", label: "Consecuencia directa", multiline: true, rows: 3, placeholder: "Qué consecuencias tiene este evento..." },
   { key: "descripcion", label: "Descripción", multiline: true, rows: 4, placeholder: "Qué sucede en este evento..." },
 ];
 
@@ -24,13 +26,23 @@ export default function EventoDetailPage({
   const { remove } = useEventos(projectId);
   const { personajes } = usePersonajes(projectId);
   const { lugares } = useLugares(projectId);
+  const { hitos } = useHitos(projectId);
+  const { escenas } = useEscenas(projectId);
   const epLinks = useEventoPersonajes(eventoId);
   const elLinks = useEventoLugares(eventoId);
+  const ehLinks = useEventoHitos(eventoId);
+  const eeLinks = useEventoEscenas(eventoId);
   const [showDelete, setShowDelete] = useState(false);
 
   const values = useMemo((): Record<string, string> => {
     if (!evento) return {};
-    return { nombre: evento.nombre, cronologia: evento.cronologia, descripcion: evento.descripcion };
+    return {
+      nombre: evento.nombre,
+      funcion: evento.funcion,
+      causa_directa: evento.causa_directa,
+      consecuencia_directa: evento.consecuencia_directa,
+      descripcion: evento.descripcion,
+    };
   }, [evento]);
 
   const handleChange = useCallback((key: string, value: string) => {
@@ -42,7 +54,7 @@ export default function EventoDetailPage({
     router.push(`/app/proyectos/${projectId}/eventos`);
   }, [remove, eventoId, projectId, router]);
 
-  // Junction maps
+  // Personaje junction
   const personajeIds = useMemo(() => epLinks.links.map((l) => l.personaje_id), [epLinks.links]);
   const personajeJunctionMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -50,12 +62,31 @@ export default function EventoDetailPage({
     return map;
   }, [epLinks.links]);
 
+  // Lugar junction
   const lugarIds = useMemo(() => elLinks.links.map((l) => l.lugar_id), [elLinks.links]);
   const lugarJunctionMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const l of elLinks.links) map.set(l.lugar_id, l.id);
     return map;
   }, [elLinks.links]);
+
+  // Hito junction
+  const hitoIds = useMemo(() => ehLinks.links.map((l) => l.hito_id), [ehLinks.links]);
+  const hitoJunctionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of ehLinks.links) map.set(l.hito_id, l.id);
+    return map;
+  }, [ehLinks.links]);
+  const hitoItems = useMemo(() => hitos.map((h) => ({ id: h.id, nombre: h.hito })), [hitos]);
+
+  // Escena junction
+  const escenaIds = useMemo(() => eeLinks.links.map((l) => l.escena_id), [eeLinks.links]);
+  const escenaJunctionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of eeLinks.links) map.set(l.escena_id, l.id);
+    return map;
+  }, [eeLinks.links]);
+  const escenaItems = useMemo(() => escenas.map((e) => ({ id: e.id, nombre: e.resumen })), [escenas]);
 
   if (!evento) return <div className="p-6 text-sm text-[var(--color-ink-muted)]">Cargando...</div>;
 
@@ -93,6 +124,24 @@ export default function EventoDetailPage({
           onAdd={elLinks.add}
           onRemove={elLinks.remove}
           junctionMap={lugarJunctionMap}
+        />
+
+        <JunctionSelector
+          label="Hitos relacionados"
+          linkedIds={hitoIds}
+          options={hitoItems}
+          onAdd={ehLinks.add}
+          onRemove={ehLinks.remove}
+          junctionMap={hitoJunctionMap}
+        />
+
+        <JunctionSelector
+          label="Escenas relacionadas"
+          linkedIds={escenaIds}
+          options={escenaItems}
+          onAdd={eeLinks.add}
+          onRemove={eeLinks.remove}
+          junctionMap={escenaJunctionMap}
         />
       </div>
 

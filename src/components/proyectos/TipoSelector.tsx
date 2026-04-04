@@ -31,6 +31,9 @@ export function TipoSelector({ value, onChange, options, colorMap }: TipoSelecto
       className="appearance-none rounded-full px-2.5 py-0.5 text-xs font-medium border-none cursor-pointer text-[var(--color-ink)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
       style={{ backgroundColor: bgColor }}
     >
+      {!value && (
+        <option value="">Seleccionar tipo...</option>
+      )}
       {options.map((option) => (
         <option key={option} value={option}>
           {option}

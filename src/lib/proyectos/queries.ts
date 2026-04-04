@@ -15,7 +15,10 @@ import type {
   Escena, EscenaInsert, EscenaUpdate,
   EventoPersonaje, EventoLugar,
   HitoPersonaje, HitoEvento,
+  ArcoPersonaje,
   EscenaPersonaje,
+  EscenaEvento,
+  ManuscritoCarpeta, ManuscritoCarpetaInsert, ManuscritoCarpetaUpdate,
 } from "@/types/proyectos";
 
 // ── Helpers ───────────────────────────────────────────────
@@ -276,6 +279,34 @@ export async function removeEventoLugar(sb: SupabaseClient, id: string): Promise
   unwrap(await sb.from("evento_lugares").delete().eq("id", id));
 }
 
+// ── Evento → Hito junction (inverse of hito_eventos) ──────
+export async function fetchEventoHitos(sb: SupabaseClient, eventoId: string): Promise<HitoEvento[]> {
+  return unwrap(await sb.from("hito_eventos").select("*").eq("evento_id", eventoId));
+}
+
+export async function addEventoHito(sb: SupabaseClient, eventoId: string, hitoId: string): Promise<HitoEvento> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("hito_eventos").insert({ hito_id: hitoId, evento_id: eventoId, user_id: userId }).select().single());
+}
+
+export async function removeEventoHito(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("hito_eventos").delete().eq("id", id));
+}
+
+// ── Evento → Escena junction (inverse of escena_eventos) ──
+export async function fetchEventoEscenas(sb: SupabaseClient, eventoId: string): Promise<EscenaEvento[]> {
+  return unwrap(await sb.from("escena_eventos").select("*").eq("evento_id", eventoId));
+}
+
+export async function addEventoEscena(sb: SupabaseClient, eventoId: string, escenaId: string): Promise<EscenaEvento> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("escena_eventos").insert({ escena_id: escenaId, evento_id: eventoId, user_id: userId }).select().single());
+}
+
+export async function removeEventoEscena(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("escena_eventos").delete().eq("id", id));
+}
+
 // ── Hitos ────────────────────────────────────────────────
 
 export async function fetchHitos(sb: SupabaseClient, proyectoId: string): Promise<Hito[]> {
@@ -373,10 +404,29 @@ export async function deleteEscena(sb: SupabaseClient, id: string): Promise<void
   unwrap(await sb.from("escenas").delete().eq("id", id));
 }
 
+// ── Arco junctions ──────────────────────────────────────
+
+export async function fetchArcoPersonajes(sb: SupabaseClient, arcoId: string): Promise<ArcoPersonaje[]> {
+  return unwrap(await sb.from("arco_personajes").select("*").eq("arco_id", arcoId));
+}
+
+export async function addArcoPersonaje(sb: SupabaseClient, arcoId: string, personajeId: string): Promise<ArcoPersonaje> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("arco_personajes").insert({ arco_id: arcoId, personaje_id: personajeId, user_id: userId }).select().single());
+}
+
+export async function removeArcoPersonaje(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("arco_personajes").delete().eq("id", id));
+}
+
 // ── Escena junctions ─────────────────────────────────────
 
 export async function fetchEscenaPersonajes(sb: SupabaseClient, escenaId: string): Promise<EscenaPersonaje[]> {
   return unwrap(await sb.from("escena_personajes").select("*").eq("escena_id", escenaId));
+}
+
+export async function fetchEscenaPersonajesByPersonaje(sb: SupabaseClient, personajeId: string): Promise<EscenaPersonaje[]> {
+  return unwrap(await sb.from("escena_personajes").select("*").eq("personaje_id", personajeId));
 }
 
 export async function addEscenaPersonaje(sb: SupabaseClient, escenaId: string, personajeId: string): Promise<EscenaPersonaje> {
@@ -386,6 +436,21 @@ export async function addEscenaPersonaje(sb: SupabaseClient, escenaId: string, p
 
 export async function removeEscenaPersonaje(sb: SupabaseClient, id: string): Promise<void> {
   unwrap(await sb.from("escena_personajes").delete().eq("id", id));
+}
+
+// ── Escena ↔ Evento junction ─────────────────────────────
+
+export async function fetchEscenaEventos(sb: SupabaseClient, escenaId: string): Promise<EscenaEvento[]> {
+  return unwrap(await sb.from("escena_eventos").select("*").eq("escena_id", escenaId));
+}
+
+export async function addEscenaEvento(sb: SupabaseClient, escenaId: string, eventoId: string): Promise<EscenaEvento> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("escena_eventos").insert({ escena_id: escenaId, evento_id: eventoId, user_id: userId }).select().single());
+}
+
+export async function removeEscenaEvento(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("escena_eventos").delete().eq("id", id));
 }
 
 // ── Personaje Evoluciones ───────────────────────────────
@@ -449,6 +514,25 @@ export async function deleteImage(sb: SupabaseClient, url: string): Promise<void
   const match = url.match(/imagenes\/(.+)$/);
   if (!match) return;
   await sb.storage.from("imagenes").remove([match[1]]);
+}
+
+// ── Manuscrito Carpetas ────────────────────────────────────
+
+export async function fetchManuscritoCarpetas(sb: SupabaseClient, proyectoId: string): Promise<ManuscritoCarpeta[]> {
+  return unwrap(await sb.from("manuscrito_carpetas").select("*").eq("proyecto_id", proyectoId).order("posicion"));
+}
+
+export async function createManuscritoCarpeta(sb: SupabaseClient, proyectoId: string, data: ManuscritoCarpetaInsert): Promise<ManuscritoCarpeta> {
+  const userId = await getUserId(sb);
+  return unwrap(await sb.from("manuscrito_carpetas").insert({ ...data, proyecto_id: proyectoId, user_id: userId }).select().single());
+}
+
+export async function updateManuscritoCarpeta(sb: SupabaseClient, id: string, data: ManuscritoCarpetaUpdate): Promise<ManuscritoCarpeta> {
+  return unwrap(await sb.from("manuscrito_carpetas").update(data).eq("id", id).select().single());
+}
+
+export async function deleteManuscritoCarpeta(sb: SupabaseClient, id: string): Promise<void> {
+  unwrap(await sb.from("manuscrito_carpetas").delete().eq("id", id));
 }
 
 // ── Batch fetch generals (for project completeness %) ───

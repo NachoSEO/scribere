@@ -9,6 +9,9 @@ import {
 import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
+import { LinkedEntities } from "@/components/proyectos/LinkedEntities";
+import { EntityPreviewPanel } from "@/components/proyectos/EntityPreviewPanel";
+import type { MentionType } from "@/lib/proyectos/entity-config";
 
 const fields: FieldConfig[] = [
   { key: "hito", label: "Hito", placeholder: "Qué sucede en este punto de la historia" },
@@ -39,6 +42,7 @@ export default function HitoDetailPage({
   const hpLinks = useHitoPersonajes(hitoId);
   const heLinks = useHitoEventos(hitoId);
   const [showDelete, setShowDelete] = useState(false);
+  const [previewEntity, setPreviewEntity] = useState<{ id: string; type: MentionType } | null>(null);
 
   const values = useMemo((): Record<string, string> => {
     if (!hito) return {};
@@ -92,7 +96,7 @@ export default function HitoDetailPage({
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
       <div className="mt-6 space-y-6">
-        <EntityForm fields={fields} values={values} onChange={handleChange} />
+        <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
 
         {/* Tipo selector */}
         <div className="space-y-1.5">
@@ -177,6 +181,15 @@ export default function HitoDetailPage({
           onRemove={heLinks.remove}
           junctionMap={eventoJunctionMap}
         />
+
+        {/* Linked entities summary */}
+        <LinkedEntities
+          projectId={projectId}
+          personajeIds={personajeIds}
+          lugarIds={hito.lugar_id ? [hito.lugar_id] : []}
+          eventoIds={eventoIds}
+          onEntityClick={(id, type) => setPreviewEntity({ id, type: type as MentionType })}
+        />
       </div>
 
       {showDelete && (
@@ -184,6 +197,15 @@ export default function HitoDetailPage({
           entityName="hito"
           onConfirm={handleDelete}
           onCancel={() => setShowDelete(false)}
+        />
+      )}
+
+      {previewEntity && (
+        <EntityPreviewPanel
+          entityId={previewEntity.id}
+          entityType={previewEntity.type}
+          projectId={projectId}
+          onClose={() => setPreviewEntity(null)}
         />
       )}
     </div>

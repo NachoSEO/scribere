@@ -1,15 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from "react";
+
+const MentionField = lazy(() => import("./MentionField").then(m => ({ default: m.MentionField })));
 
 interface CompactCardProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  projectId?: string;
 }
 
-export function CompactCard({ label, value, onChange, placeholder }: CompactCardProps) {
+export function CompactCard({ label, value, onChange, placeholder, projectId }: CompactCardProps) {
   const [local, setLocal] = useState(value);
   const isTyping = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -25,11 +28,9 @@ export function CompactCard({ label, value, onChange, placeholder }: CompactCard
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    // Clamp between ~1 row and ~3 lines
     const lineHeight = 20;
     const minHeight = lineHeight;
-    const maxHeight = lineHeight * 3 + 8;
-    el.style.height = `${Math.min(Math.max(el.scrollHeight, minHeight), maxHeight)}px`;
+    el.style.height = `${Math.max(el.scrollHeight, minHeight)}px`;
   }, []);
 
   useEffect(() => {
@@ -46,6 +47,27 @@ export function CompactCard({ label, value, onChange, placeholder }: CompactCard
     },
     [onChange]
   );
+
+  if (projectId) {
+    return (
+      <div className="rounded-lg border border-[var(--color-border)] bg-white p-3">
+        <p className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-1">
+          {label}
+        </p>
+        <Suspense fallback={<div className="h-5 animate-pulse bg-[var(--color-cream)] rounded" />}>
+          <MentionField
+            label=""
+            value={value}
+            onChange={onChange}
+            multiline
+            placeholder={placeholder}
+            projectId={projectId}
+            rows={1}
+          />
+        </Suspense>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border border-[var(--color-border)] bg-white p-3">
