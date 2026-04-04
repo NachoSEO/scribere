@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -19,11 +18,9 @@ import {
 } from "@/lib/editor/focus-dimming-plugin";
 import { buildOffsetMap, textRangeToPmRange } from "@/lib/editor/text-extraction";
 import { getMentionItems, createMentionSuggestionRenderer } from "@/components/proyectos/MentionSuggestion";
-import { getMentionEntityUrl } from "@/lib/proyectos/entity-config";
 import { useFocusModeStore } from "@/lib/manuscrito/focus-mode-store";
 import { CustomMention } from "./CustomMention";
 import { FormattingToolbar } from "./FormattingToolbar";
-import { useHoverPreview } from "./useHoverPreview";
 
 function useAnalysisPlugin() {
   const ref = useRef<ReturnType<typeof createAnalysisPlugin> | null>(null);
@@ -42,6 +39,7 @@ export interface SceneEditorProps {
   projectId: string;
   correctorEnabled: boolean;
   onNavigateReady: (fn: (start: number, end: number) => void) => void;
+  onEntityClick?: (type: string, id: string) => void;
 }
 
 export function SceneEditor({
@@ -49,9 +47,11 @@ export function SceneEditor({
   projectId,
   correctorEnabled,
   onNavigateReady,
+  onEntityClick,
 }: SceneEditorProps) {
-  const router = useRouter();
   const { escena, save } = useEscena(escenaId);
+  const onEntityClickRef = useRef(onEntityClick);
+  onEntityClickRef.current = onEntityClick;
   const analysisPlugin = useAnalysisPlugin();
   const dimmingPlugin = useDimmingPlugin();
 
@@ -95,7 +95,7 @@ export function SceneEditor({
           const type = el.getAttribute("data-mention-type");
           const id = el.getAttribute("data-id");
           if (type && id) {
-            router.push(getMentionEntityUrl(projectId, type, id));
+            onEntityClickRef.current?.(type, id);
             return true;
           }
         }
@@ -196,8 +196,6 @@ export function SceneEditor({
   useEffect(() => {
     onNavigateReady(navigateToIssue);
   }, [navigateToIssue, onNavigateReady]);
-
-  useHoverPreview(editor);
 
   const wordCount = editor?.storage.characterCount?.words() ?? 0;
   const charCount = editor?.storage.characterCount?.characters() ?? 0;

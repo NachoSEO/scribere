@@ -76,6 +76,7 @@ export default function ManuscritoPage({
   const [navigateFn, setNavigateFn] = useState<((s: number, e: number) => void) | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("editor");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [inspectedEntity, setInspectedEntity] = useState<{ type: string; id: string } | null>(null);
 
   const focusMode = useFocusModeStore((s) => s.focusMode);
   const toggleFocusMode = useFocusModeStore((s) => s.toggleFocusMode);
@@ -103,6 +104,11 @@ export default function ManuscritoPage({
 
   const handleNavigateReady = useCallback((fn: (s: number, e: number) => void) => {
     setNavigateFn(() => fn);
+  }, []);
+
+  const handleEntityClick = useCallback((type: string, id: string) => {
+    setInspectedEntity({ type, id });
+    setSidebarOpen(true);
   }, []);
 
   const handleCreateEscena = useCallback(
@@ -192,6 +198,7 @@ export default function ManuscritoPage({
             projectId={projectId}
             correctorEnabled={false}
             onNavigateReady={handleNavigateReady}
+            onEntityClick={handleEntityClick}
           />
         </div>
       </div>
@@ -302,6 +309,7 @@ export default function ManuscritoPage({
                 projectId={projectId}
                 correctorEnabled={effectiveCorrectorEnabled}
                 onNavigateReady={handleNavigateReady}
+                onEntityClick={handleEntityClick}
               />
             )
           ) : (
@@ -317,6 +325,8 @@ export default function ManuscritoPage({
           projectId={projectId}
           correctorEnabled={effectiveCorrectorEnabled}
           navigateFn={navigateFn}
+          inspectedEntity={inspectedEntity}
+          onInspectEntity={setInspectedEntity}
         />
       )}
     </div>

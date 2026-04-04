@@ -100,49 +100,35 @@ function EntityChip({
   nombre,
   type,
   color,
-  expandedId,
-  onToggle,
+  onInspect,
   onRemove,
-  projectId,
 }: {
   id: string;
   nombre: string;
   type: string;
   color: string;
-  expandedId: string | null;
-  onToggle: (id: string) => void;
+  onInspect?: (type: string, id: string) => void;
   onRemove?: (id: string) => void;
-  projectId: string;
+  projectId?: string;
+  expandedId?: string | null;
+  onToggle?: (id: string) => void;
 }) {
-  const isExpanded = expandedId === id;
-
   return (
-    <div>
-      <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1">
+      <button
+        onClick={() => onInspect?.(type, id)}
+        className="flex items-center gap-1.5 flex-1 min-w-0 rounded px-2 py-1.5 text-xs transition-colors text-left hover:bg-[var(--color-parchment)]"
+      >
+        <span className="shrink-0 h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+        <span className="text-[var(--color-ink)] truncate">{nombre || "Sin nombre"}</span>
+      </button>
+      {onRemove && (
         <button
-          onClick={() => onToggle(id)}
-          className={`flex items-center gap-1.5 flex-1 min-w-0 rounded px-2 py-1.5 text-xs transition-colors text-left ${
-            isExpanded ? "bg-white border border-[var(--color-border)]" : "hover:bg-[var(--color-parchment)]"
-          }`}
+          onClick={() => onRemove(id)}
+          className="shrink-0 text-[var(--color-ink-muted)] hover:text-red-600 text-xs px-1 transition-colors"
         >
-          <span className="shrink-0 h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-          <span className="text-[var(--color-ink)] truncate">{nombre || "Sin nombre"}</span>
+          &times;
         </button>
-        {onRemove && (
-          <button
-            onClick={() => onRemove(id)}
-            className="shrink-0 text-[var(--color-ink-muted)] hover:text-red-600 text-xs px-1 transition-colors"
-          >
-            &times;
-          </button>
-        )}
-      </div>
-      {isExpanded && (
-        <div className="ml-3 mt-1 mb-2 pl-3 border-l-2 border-[var(--color-border)]">
-          {type === "personaje" && <PersonajeDetail id={id} projectId={projectId} />}
-          {type === "lugar" && <LugarDetail id={id} projectId={projectId} />}
-          {type === "evento" && <EventoDetail id={id} projectId={projectId} />}
-        </div>
       )}
     </div>
   );
@@ -155,6 +141,8 @@ export interface SceneSidebarProps {
   projectId: string;
   correctorEnabled: boolean;
   navigateFn: ((s: number, e: number) => void) | null;
+  inspectedEntity?: { type: string; id: string } | null;
+  onInspectEntity?: (entity: { type: string; id: string } | null) => void;
 }
 
 export function SceneSidebar({
@@ -162,6 +150,8 @@ export function SceneSidebar({
   projectId,
   correctorEnabled,
   navigateFn,
+  inspectedEntity,
+  onInspectEntity,
 }: SceneSidebarProps) {
   const [activeTab, setActiveTab] = useState<"elementos" | "corrector" | "versiones">(
     correctorEnabled ? "corrector" : "elementos"
@@ -221,9 +211,14 @@ export function SceneSidebar({
 
   const toggleExpand = (id: string) => setExpandedId((prev) => (prev === id ? null : id));
 
+  // When clicking an entity chip in the sidebar, inspect it too
+  const handleEntityInspect = useCallback((type: string, id: string) => {
+    onInspectEntity?.({ type, id });
+  }, [onInspectEntity]);
+
   return (
     <div
-      className="flex flex-col h-full border-l border-[var(--color-border)] bg-[var(--color-cream-dark)]"
+      className="relative flex flex-col h-full border-l border-[var(--color-border)] bg-[var(--color-cream-dark)]"
       style={{ width: 300, minWidth: 300 }}
     >
       <div className="flex border-b border-[var(--color-border)] shrink-0">
@@ -359,8 +354,7 @@ export function SceneSidebar({
                   nombre={p.nombre}
                   type="personaje"
                   color={ENTITY_TYPE_CONFIG.personaje.color}
-                  expandedId={expandedId}
-                  onToggle={toggleExpand}
+                  onInspect={handleEntityInspect}
                   onRemove={(pid) => {
                     const jid = personajeJunctionMap.get(pid);
                     if (jid) epLinks.remove(jid);
@@ -386,8 +380,7 @@ export function SceneSidebar({
                   nombre={linkedLugar.nombre}
                   type="lugar"
                   color={ENTITY_TYPE_CONFIG.lugar.color}
-                  expandedId={expandedId}
-                  onToggle={toggleExpand}
+                  onInspect={handleEntityInspect}
                   onRemove={() => saveEscena({ lugar_id: null })}
                   projectId={projectId}
                 />
@@ -413,8 +406,7 @@ export function SceneSidebar({
                   nombre={ev.nombre}
                   type="evento"
                   color={ENTITY_TYPE_CONFIG.evento.color}
-                  expandedId={expandedId}
-                  onToggle={toggleExpand}
+                  onInspect={handleEntityInspect}
                   onRemove={(eid) => {
                     const jid = eventoJunctionMap.get(eid);
                     if (jid) eeLinks.remove(jid);
@@ -443,6 +435,201 @@ export function SceneSidebar({
           </div>
         )}
       </div>
+
+      {/* Entity inspector overlay */}
+      {inspectedEntity && (
+        <div className="absolute inset-0 z-10 flex flex-col bg-[var(--color-cream-dark)]">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)] shrink-0">
+            <button
+              onClick={() => onInspectEntity?.(null)}
+              className="flex items-center gap-1 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M7 2L3 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Volver
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
+            <EntityInspectorPanel type={inspectedEntity.type} id={inspectedEntity.id} projectId={projectId} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Entity inspector (full detail panel) ────────────────
+
+function EntityInspectorPanel({ type, id, projectId }: { type: string; id: string; projectId: string }) {
+  if (type === "personaje") return <PersonajeInspector id={id} projectId={projectId} />;
+  if (type === "lugar") return <LugarInspector id={id} projectId={projectId} />;
+  if (type === "evento") return <EventoInspector id={id} projectId={projectId} />;
+  if (type === "faccion") return <FaccionInspector id={id} projectId={projectId} />;
+  if (type === "hito") return <HitoInspector id={id} />;
+  if (type === "arco") return <ArcoInspector id={id} />;
+  return <p className="text-xs text-[var(--color-ink-muted)] italic">Entidad no encontrada</p>;
+}
+
+function InspectorField({ label, value }: { label: string; value: string }) {
+  if (!value) return null;
+  return (
+    <div>
+      <p className="text-[10px] text-[var(--color-ink-muted)] font-medium mb-0.5">{label}</p>
+      <p className="text-xs text-[var(--color-ink-light)] break-words whitespace-pre-wrap">{value}</p>
+    </div>
+  );
+}
+
+function PersonajeInspector({ id, projectId }: { id: string; projectId: string }) {
+  const personaje = useProyectosStore((s) => s.personajes.find((p) => p.id === id));
+  const faccion = useProyectosStore((s) => {
+    const p = s.personajes.find((p) => p.id === id);
+    return p?.faccion_id ? s.facciones.find((f) => f.id === p.faccion_id) ?? null : null;
+  });
+  if (!personaje) return <p className="text-xs text-[var(--color-ink-muted)] italic">Personaje no encontrado</p>;
+
+  const color = ENTITY_TYPE_CONFIG.personaje.color;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        {personaje.imagen_url ? (
+          <img src={personaje.imagen_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-semibold shrink-0"
+            style={{ backgroundColor: `${color}26`, color }}>
+            {personaje.nombre.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div>
+          <p className="text-sm font-semibold text-[var(--color-ink)]">{personaje.nombre}</p>
+          {personaje.tipo && <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color }}>{personaje.tipo}</p>}
+        </div>
+      </div>
+      {faccion && (
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ENTITY_TYPE_CONFIG.faccion.color }} />
+          <span className="text-xs text-[var(--color-ink-light)]">{faccion.nombre}</span>
+        </div>
+      )}
+      <InspectorField label="Función narrativa" value={personaje.funcion_narrativa} />
+      <InspectorField label="Motivación" value={personaje.motivacion} />
+      <InspectorField label="Complicación" value={personaje.complicacion} />
+      <InspectorField label="Concepto" value={personaje.concepto} />
+      <InspectorField label="Descripción" value={personaje.descripcion} />
+      <InspectorField label="Notas" value={personaje.notas} />
+      <a href={getMentionEntityUrl(projectId, "personaje", id)}
+        className="inline-flex items-center gap-1 text-[10px] text-[var(--color-accent)] hover:underline">
+        Abrir ficha completa →
+      </a>
+    </div>
+  );
+}
+
+function LugarInspector({ id, projectId }: { id: string; projectId: string }) {
+  const lugar = useProyectosStore((s) => s.lugares.find((l) => l.id === id));
+  if (!lugar) return <p className="text-xs text-[var(--color-ink-muted)] italic">Lugar no encontrado</p>;
+
+  const color = ENTITY_TYPE_CONFIG.lugar.color;
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-[var(--color-ink)]">{lugar.nombre}</p>
+        {lugar.tipo && <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color }}>{lugar.tipo}</p>}
+      </div>
+      <InspectorField label="Descripción" value={lugar.descripcion} />
+      <a href={getMentionEntityUrl(projectId, "lugar", id)}
+        className="inline-flex items-center gap-1 text-[10px] text-[var(--color-accent)] hover:underline">
+        Abrir ficha completa →
+      </a>
+    </div>
+  );
+}
+
+function EventoInspector({ id, projectId }: { id: string; projectId: string }) {
+  const evento = useProyectosStore((s) => s.eventos.find((e) => e.id === id));
+  if (!evento) return <p className="text-xs text-[var(--color-ink-muted)] italic">Evento no encontrado</p>;
+
+  const color = ENTITY_TYPE_CONFIG.evento.color;
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-[var(--color-ink)]">{evento.nombre}</p>
+        {evento.cronologia && <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color }}>{evento.cronologia}</p>}
+      </div>
+      <InspectorField label="Descripción" value={evento.descripcion} />
+      <InspectorField label="Función" value={evento.funcion} />
+      <InspectorField label="Causa directa" value={evento.causa_directa} />
+      <InspectorField label="Consecuencia directa" value={evento.consecuencia_directa} />
+      <a href={getMentionEntityUrl(projectId, "evento", id)}
+        className="inline-flex items-center gap-1 text-[10px] text-[var(--color-accent)] hover:underline">
+        Abrir ficha completa →
+      </a>
+    </div>
+  );
+}
+
+function FaccionInspector({ id, projectId }: { id: string; projectId: string }) {
+  const faccion = useProyectosStore((s) => s.facciones.find((f) => f.id === id));
+  if (!faccion) return <p className="text-xs text-[var(--color-ink-muted)] italic">Facción no encontrada</p>;
+
+  const color = ENTITY_TYPE_CONFIG.faccion.color;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        {faccion.imagen_url ? (
+          <img src={faccion.imagen_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-semibold shrink-0"
+            style={{ backgroundColor: `${color}26`, color }}>
+            {faccion.nombre.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <p className="text-sm font-semibold text-[var(--color-ink)]">{faccion.nombre}</p>
+      </div>
+      <InspectorField label="Concepto" value={faccion.concepto} />
+      <InspectorField label="Objetivos" value={faccion.objetivos} />
+      <InspectorField label="Motivación" value={faccion.motivacion} />
+      <InspectorField label="Complicación" value={faccion.complicacion} />
+      <InspectorField label="Notas" value={faccion.notas} />
+      <a href={getMentionEntityUrl(projectId, "faccion", id)}
+        className="inline-flex items-center gap-1 text-[10px] text-[var(--color-accent)] hover:underline">
+        Abrir ficha completa →
+      </a>
+    </div>
+  );
+}
+
+function HitoInspector({ id }: { id: string }) {
+  const hito = useProyectosStore((s) => s.hitos.find((h) => h.id === id));
+  if (!hito) return <p className="text-xs text-[var(--color-ink-muted)] italic">Hito no encontrado</p>;
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-[var(--color-ink)]">{hito.hito || "Sin nombre"}</p>
+        {hito.tipo && <p className="text-[10px] font-medium uppercase tracking-wider text-amber-600">{hito.tipo.replace(/_/g, " ")}</p>}
+      </div>
+      <InspectorField label="Información" value={hito.informacion} />
+      <InspectorField label="Efecto" value={hito.efecto} />
+      <InspectorField label="Origen información" value={hito.origen_informacion} />
+    </div>
+  );
+}
+
+function ArcoInspector({ id }: { id: string }) {
+  const arco = useProyectosStore((s) => s.arcos.find((a) => a.id === id));
+  if (!arco) return <p className="text-xs text-[var(--color-ink-muted)] italic">Arco no encontrado</p>;
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-[var(--color-ink)]">{arco.nombre || "Sin nombre"}</p>
+        {arco.tipo_resolucion && <p className="text-[10px] font-medium uppercase tracking-wider text-stone-500">{arco.tipo_resolucion}</p>}
+      </div>
+      <InspectorField label="Intención" value={arco.planteamiento} />
+      <InspectorField label="Obstáculo" value={arco.nudo} />
+      <InspectorField label="Resolución" value={arco.desenlace} />
     </div>
   );
 }
