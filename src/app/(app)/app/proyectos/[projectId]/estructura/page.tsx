@@ -3,8 +3,8 @@
 import { use, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useFases, useHitos, useArcos, useEscenas, usePersonajes } from "@/lib/proyectos/hooks";
-import { TIPO_RESOLUCION_OPTIONS } from "@/types/proyectos";
-import type { Fase, Hito, Arco, Escena } from "@/types/proyectos";
+import { TIPO_RESOLUCION_OPTIONS, ESCENA_ESTADO_OPTIONS } from "@/types/proyectos";
+import type { Fase, Hito, Arco, Escena, Personaje } from "@/types/proyectos";
 import { EmptyState } from "@/components/proyectos/EmptyState";
 
 // ── Spine data assembly ─────────────────────────────────────
@@ -270,6 +270,7 @@ export default function EstructuraPage({
       <ColumnaView
         filterMode={filterMode}
         projectId={projectId}
+        personajes={personajes}
         sortedFases={filtered.sortedFases}
         hitosByFase={filtered.hitosByFase}
         arcoByOrigenId={filtered.arcoByOrigenId}
@@ -306,9 +307,26 @@ export default function EstructuraPage({
 // COLUMNA VIEW (improved spine)
 // ══════════════════════════════════════════════════════════════
 
+function PovBadge({ personaje, size = "sm" }: { personaje: Personaje; size?: "sm" | "xs" }) {
+  const dim = size === "sm" ? "w-5 h-5" : "w-4 h-4";
+  const fontSize = size === "sm" ? "text-[8px]" : "text-[7px]";
+  if (personaje.imagen_url) {
+    return <img src={personaje.imagen_url} alt={personaje.nombre} title={personaje.nombre} className={`${dim} rounded-full object-cover shrink-0`} />;
+  }
+  return (
+    <span
+      title={personaje.nombre}
+      className={`shrink-0 ${dim} rounded-full flex items-center justify-center ${fontSize} font-bold`}
+      style={{ backgroundColor: "#8b6f4726", color: "#8b6f47" }}
+    >
+      {personaje.nombre.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 function ColumnaView({
   filterMode,
-  projectId, sortedFases, hitosByFase, arcoByOrigenId, escenasByHito,
+  projectId, personajes, sortedFases, hitosByFase, arcoByOrigenId, escenasByHito,
   unassignedHitos, orphanedArcos, unassignedEscenas,
   collapsed, toggleCollapse, nav,
   creatingFase, setCreatingFase, newFaseName, setNewFaseName, handleCreateFase,
@@ -318,6 +336,7 @@ function ColumnaView({
 }: {
   filterMode: FilterMode;
   projectId: string;
+  personajes: Personaje[];
   sortedFases: Fase[];
   hitosByFase: Map<string, Hito[]>;
   arcoByOrigenId: Map<string, Arco>;
@@ -417,13 +436,18 @@ function ColumnaView({
                       {hito.hito || "Hito sin nombre"}
                     </button>
                     <div className="space-y-1 ml-3">
-                      {escenas.map((esc) => (
-                        <button key={esc.id} onClick={() => nav(`escenas/${esc.id}`)}
-                          className="flex items-start gap-2 rounded-md px-2.5 py-1.5 text-xs text-[var(--color-ink-light)] hover:bg-[var(--color-cream-dark)] hover:text-[var(--color-ink)] transition-colors w-full text-left">
-                          <span className="shrink-0 mt-1.5 h-1 w-1 rounded-full bg-[var(--color-ink-muted)] opacity-40" />
-                          <span className="break-words leading-relaxed">{esc.resumen || "Sin resumen"}</span>
-                        </button>
-                      ))}
+                      {escenas.map((esc) => {
+                        const escPov = esc.pov_personaje_id ? personajes.find((p) => p.id === esc.pov_personaje_id) : null;
+                        const estadoOpt = esc.estado ? ESCENA_ESTADO_OPTIONS.find((o) => o.value === esc.estado) : null;
+                        return (
+                          <button key={esc.id} onClick={() => nav(`escenas/${esc.id}`)}
+                            className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-[var(--color-ink-light)] hover:bg-[var(--color-cream-dark)] hover:text-[var(--color-ink)] transition-colors w-full text-left">
+                            {estadoOpt && <span className="shrink-0 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: estadoOpt.color }} />}
+                            {escPov && <PovBadge personaje={escPov} size="xs" />}
+                            <span className="break-words leading-relaxed">{esc.resumen || "Sin resumen"}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -517,8 +541,13 @@ function ColumnaView({
                         <button
                           onClick={() => nav(`hitos/${hito.id}`)}
                           className="group flex-1 min-w-0 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-left transition-all hover:border-[var(--color-accent-light)] hover:shadow-sm"
+                          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                         >
                           <div className="flex items-start gap-2 flex-wrap">
+                            {hito.pov_personaje_id && (() => {
+                              const pov = personajes.find((p) => p.id === hito.pov_personaje_id);
+                              return pov ? <PovBadge personaje={pov} /> : null;
+                            })()}
                             <span className="text-sm font-medium text-[var(--color-ink)] group-hover:text-[var(--color-accent)] transition-colors break-words">
                               {hito.hito || "Hito sin nombre"}
                             </span>
@@ -535,16 +564,21 @@ function ColumnaView({
                           {/* Escenas inside hito — only in "todo" mode */}
                           {filterMode === "todo" && escenas.length > 0 && (
                             <div className="mt-2.5 pt-2 border-t border-[var(--color-border-light)] space-y-0.5">
-                              {escenas.map((esc) => (
-                                <div
-                                  key={esc.id}
-                                  onClick={(e) => { e.stopPropagation(); nav(`escenas/${esc.id}`); }}
-                                  className="flex items-start gap-2 rounded px-2 py-1 text-xs text-[var(--color-ink-light)] hover:bg-[var(--color-cream)] hover:text-[var(--color-ink)] transition-colors cursor-pointer"
-                                >
-                                  <span className="shrink-0 mt-1.5 h-1 w-1 rounded-full bg-[var(--color-ink-muted)] opacity-40" />
-                                  <span className="break-words leading-relaxed">{esc.resumen || "Sin resumen"}</span>
-                                </div>
-                              ))}
+                              {escenas.map((esc) => {
+                                const escPov = esc.pov_personaje_id ? personajes.find((p) => p.id === esc.pov_personaje_id) : null;
+                                const estadoOpt = esc.estado ? ESCENA_ESTADO_OPTIONS.find((o) => o.value === esc.estado) : null;
+                                return (
+                                  <div
+                                    key={esc.id}
+                                    onClick={(e) => { e.stopPropagation(); nav(`escenas/${esc.id}`); }}
+                                    className="flex items-center gap-2 rounded px-2 py-1 text-xs text-[var(--color-ink-light)] hover:bg-[var(--color-cream)] hover:text-[var(--color-ink)] transition-colors cursor-pointer"
+                                  >
+                                    {estadoOpt && <span className="shrink-0 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: estadoOpt.color }} />}
+                                    {escPov && <PovBadge personaje={escPov} size="xs" />}
+                                    <span className="break-words leading-relaxed">{esc.resumen || "Sin resumen"}</span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </button>

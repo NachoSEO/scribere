@@ -867,7 +867,7 @@ export function useEscenaVersiones(escenaId: string) {
 
 export function useEscenaTareas(escenaId: string) {
   const [tareas, setTareas] = useState<EscenaTarea[]>([]);
-  const proyectoId = useProyectosStore((s) => s.currentProyecto?.id);
+  const proyectoId = useProyectosStore((s) => s.currentProyecto?.id ?? s.escenas.find((e) => e.id === escenaId)?.proyecto_id);
 
   useEffect(() => {
     q.fetchEscenaTareas(sb, escenaId).then(setTareas).catch(console.error);
@@ -875,7 +875,7 @@ export function useEscenaTareas(escenaId: string) {
   }, [escenaId]);
 
   const create = useCallback(async (data: EscenaTareaInsert) => {
-    if (!proyectoId) throw new Error("No proyecto selected");
+    if (!proyectoId) return null as unknown as EscenaTarea;
     const tarea = await q.createEscenaTarea(sb, escenaId, proyectoId, data);
     setTareas((prev) => [...prev, tarea]);
     return tarea;

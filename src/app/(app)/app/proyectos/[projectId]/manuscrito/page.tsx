@@ -1,7 +1,10 @@
 "use client";
 
 import { use, useState, useCallback, useEffect } from "react";
-import { useEscenas, useManuscritoCarpetas } from "@/lib/proyectos/hooks";
+import { useEscenas, useManuscritoCarpetas, useHitos, useArcos, useLugares, useEventos, usePersonajes } from "@/lib/proyectos/hooks";
+import { useProyectosStore } from "@/lib/proyectos/store";
+import { updateEscena } from "@/lib/proyectos/queries";
+import { createClient } from "@/lib/supabase/client";
 import { useFocusModeStore } from "@/lib/manuscrito/focus-mode-store";
 import { StatsBar } from "@/components/corrector/StatsBar";
 import { FileTree } from "@/components/manuscrito/FileTree";
@@ -61,10 +64,18 @@ export default function ManuscritoPage({
   const { escenas, create: createEscena, remove: removeEscena } = useEscenas(projectId);
   const { carpetas, create: createCarpeta, update: updateCarpeta, remove: removeCarpeta } = useManuscritoCarpetas(projectId);
 
+  // Populate store for sidebar selectors and POV display
+  useHitos(projectId);
+  useArcos(projectId);
+  useLugares(projectId);
+  useEventos(projectId);
+  const { personajes } = usePersonajes(projectId);
+
   const [selectedEscenaId, setSelectedEscenaId] = useState<string | null>(null);
   const [correctorEnabled, setCorrectorEnabled] = useState(false);
   const [navigateFn, setNavigateFn] = useState<((s: number, e: number) => void) | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("editor");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const focusMode = useFocusModeStore((s) => s.focusMode);
   const toggleFocusMode = useFocusModeStore((s) => s.toggleFocusMode);
@@ -135,6 +146,15 @@ export default function ManuscritoPage({
     [removeEscena, selectedEscenaId]
   );
 
+  const handleMoveEscena = useCallback(
+    async (escenaId: string, carpetaId: string | null) => {
+      const sb = createClient();
+      const updated = await updateEscena(sb, escenaId, { carpeta_id: carpetaId });
+      useProyectosStore.getState().updateEscenaInList(updated);
+    },
+    []
+  );
+
   const handleToggleCorrecto = () => {
     if (focusMode || isPreview) return;
     setCorrectorEnabled((prev) => !prev);
@@ -183,6 +203,7 @@ export default function ManuscritoPage({
       <FileTree
         escenas={escenas}
         carpetas={carpetas}
+        personajes={personajes}
         selectedId={selectedEscenaId}
         onSelect={setSelectedEscenaId}
         onCreateEscena={handleCreateEscena}
@@ -190,6 +211,7 @@ export default function ManuscritoPage({
         onCreateCarpeta={handleCreateCarpeta}
         onDeleteCarpeta={handleDeleteCarpeta}
         onRenameCarpeta={handleRenameCarpeta}
+        onMoveEscena={handleMoveEscena}
       />
 
       <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
@@ -249,6 +271,19 @@ export default function ManuscritoPage({
                 Enfoque
               </button>
             )}
+
+            {selectedEscenaId && !isCompile && (
+              <button
+                onClick={() => setSidebarOpen((p) => !p)}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium bg-[var(--color-parchment)] text-[var(--color-ink-light)] hover:bg-[var(--color-border)] border border-[var(--color-border)] transition-colors"
+                title={sidebarOpen ? "Ocultar panel" : "Mostrar panel"}
+              >
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <rect x="1.5" y="1.5" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                  <line x1="8" y1="1.5" x2="8" y2="11.5" stroke="currentColor" strokeWidth="1.2" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
@@ -275,7 +310,7 @@ export default function ManuscritoPage({
         </div>
       </div>
 
-      {selectedEscenaId && !isCompile && (
+      {selectedEscenaId && !isCompile && sidebarOpen && (
         <SceneSidebar
           key={selectedEscenaId}
           escenaId={selectedEscenaId}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import type { Escena, ManuscritoCarpeta } from "@/types/proyectos";
+import type { Escena, ManuscritoCarpeta, Personaje } from "@/types/proyectos";
 import { ESCENA_ESTADO_OPTIONS } from "@/types/proyectos";
 
 // ── Icons ────────────────────────────────────────────────────
@@ -42,20 +42,44 @@ function PageIcon({ selected }: { selected: boolean }) {
 
 // ── Sub-components ────────────────────────────────────────────
 
-function EscenaRow({ escena, selected, paddingLeft, onSelect, onDelete }: {
+function PovAvatar({ personaje, selected }: { personaje: Personaje; selected: boolean }) {
+  if (personaje.imagen_url) {
+    return <img src={personaje.imagen_url} alt="" className="w-4 h-4 rounded-full object-cover shrink-0" />;
+  }
+  return (
+    <span
+      className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold"
+      style={{
+        backgroundColor: selected ? "rgba(255,255,255,0.3)" : "#8b6f4726",
+        color: selected ? "white" : "#8b6f47",
+      }}
+    >
+      {personaje.nombre.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
+function EscenaRow({ escena, selected, paddingLeft, onSelect, onDelete, personajes, onDragStart }: {
   escena: Escena;
   selected: boolean;
   paddingLeft: number;
   onSelect: (id: string) => void;
   onDelete?: (id: string) => void;
+  personajes?: Personaje[];
+  onDragStart?: (e: React.DragEvent, escenaId: string) => void;
 }) {
+  const povPersonaje = escena.pov_personaje_id && personajes
+    ? personajes.find((p) => p.id === escena.pov_personaje_id)
+    : null;
   return (
     <div
+      draggable={!!onDragStart}
+      onDragStart={(e) => onDragStart?.(e, escena.id)}
       className={`flex items-center w-full py-1.5 pr-1 text-xs transition-colors group ${
         selected
           ? "bg-[var(--color-accent)] text-white"
           : "text-[var(--color-ink)] hover:bg-[var(--color-parchment)]"
-      }`}
+      } ${onDragStart ? "cursor-grab active:cursor-grabbing" : ""}`}
       style={{ paddingLeft }}
     >
       <button onClick={() => onSelect(escena.id)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
@@ -64,6 +88,7 @@ function EscenaRow({ escena, selected, paddingLeft, onSelect, onDelete }: {
           const opt = ESCENA_ESTADO_OPTIONS.find((o) => o.value === escena.estado);
           return opt ? <span className="shrink-0 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: selected ? 'rgba(255,255,255,0.6)' : opt.color }} /> : null;
         })()}
+        {povPersonaje && <PovAvatar personaje={povPersonaje} selected={selected} />}
         <span className="truncate flex-1">{escena.resumen || "Sin título"}</span>
       </button>
       {onDelete && (
@@ -112,6 +137,7 @@ function InlineInput({ inputRef, value, onChange, onKeyDown, onBlur, paddingLeft
 export interface FileTreeProps {
   escenas: Escena[];
   carpetas: ManuscritoCarpeta[];
+  personajes?: Personaje[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onCreateEscena: (nombre: string, carpetaId: string | null) => Promise<void>;
@@ -119,19 +145,22 @@ export interface FileTreeProps {
   onCreateCarpeta: (nombre: string, padreId: string | null) => Promise<void>;
   onDeleteCarpeta?: (id: string) => Promise<void>;
   onRenameCarpeta?: (id: string, nombre: string) => Promise<void>;
+  onMoveEscena?: (escenaId: string, carpetaId: string | null) => Promise<void>;
 }
 
 export function FileTree({
-  escenas, carpetas,
+  escenas, carpetas, personajes,
   selectedId, onSelect,
   onCreateEscena, onDeleteEscena,
   onCreateCarpeta, onDeleteCarpeta, onRenameCarpeta,
+  onMoveEscena,
 }: FileTreeProps) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState<{ type: "escena" | "carpeta"; parentId: string | null } | null>(null);
   const [newName, setNewName] = useState("");
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const renameRef = useRef<HTMLInputElement>(null);
 
@@ -176,6 +205,37 @@ export function FileTree({
     setRenameValue("");
   }, [renaming, renameValue, onRenameCarpeta]);
 
+  // Drag and drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, escenaId: string) => {
+    e.dataTransfer.setData("text/plain", escenaId);
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, targetId: string | null) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverTarget(targetId);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Only clear if we're leaving the actual element, not entering a child
+    const relatedTarget = e.relatedTarget as HTMLElement | null;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDragOverTarget(null);
+    }
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent, carpetaId: string | null) => {
+    e.preventDefault();
+    setDragOverTarget(null);
+    const escenaId = e.dataTransfer.getData("text/plain");
+    if (!escenaId || !onMoveEscena) return;
+    // Don't move if scene is already in this folder
+    const escena = escenas.find((esc) => esc.id === escenaId);
+    if (escena && escena.carpeta_id === carpetaId) return;
+    await onMoveEscena(escenaId, carpetaId);
+  }, [onMoveEscena, escenas]);
+
   // Group data
   const escenasByCarpeta = useMemo(() => {
     const map = new Map<string, Escena[]>();
@@ -211,9 +271,16 @@ export function FileTree({
     const subCarpetas = childCarpetas.get(carpeta.id) ?? [];
     const carpetaEscenas = escenasByCarpeta.get(carpeta.id) ?? [];
 
+    const isDragOver = dragOverTarget === carpeta.id;
+
     return (
       <div key={carpeta.id}>
-        <div className="flex items-center group">
+        <div
+          className={`flex items-center group transition-colors ${isDragOver ? "bg-amber-50 ring-1 ring-inset ring-[var(--color-accent-light)]" : ""}`}
+          onDragOver={(e) => handleDragOver(e, carpeta.id)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, carpeta.id)}
+        >
           <button
             onClick={() => toggleCollapse(carpeta.id)}
             className="flex items-center gap-1.5 flex-1 min-w-0 py-1.5 text-left hover:bg-[var(--color-parchment)] transition-colors"
@@ -260,7 +327,7 @@ export function FileTree({
           <div>
             {subCarpetas.map((sub) => renderCarpeta(sub, depth + 1))}
             {carpetaEscenas.map((escena) => (
-              <EscenaRow key={escena.id} escena={escena} selected={escena.id === selectedId} paddingLeft={pl + 20} onSelect={onSelect} onDelete={onDeleteEscena} />
+              <EscenaRow key={escena.id} escena={escena} selected={escena.id === selectedId} paddingLeft={pl + 20} onSelect={onSelect} onDelete={onDeleteEscena} personajes={personajes} onDragStart={onMoveEscena ? handleDragStart : undefined} />
             ))}
             {creating?.type === "escena" && creating.parentId === carpeta.id && (
               <InlineInput inputRef={inputRef} value={newName} onChange={setNewName} onKeyDown={handleKeyDown} onBlur={handleCreate} paddingLeft={pl + 20} placeholder="Nombre de la escena..." />
@@ -300,10 +367,20 @@ export function FileTree({
         {/* Carpetas */}
         {rootCarpetas.map((c) => renderCarpeta(c, 0))}
 
-        {/* Sueltas (scenes without folder) */}
-        {sueltas.map((escena) => (
-          <EscenaRow key={escena.id} escena={escena} selected={escena.id === selectedId} paddingLeft={12} onSelect={onSelect} onDelete={onDeleteEscena} />
-        ))}
+        {/* Sueltas (scenes without folder) — drop target for "root" */}
+        <div
+          className={`transition-colors ${dragOverTarget === "__root__" ? "bg-amber-50 ring-1 ring-inset ring-[var(--color-accent-light)]" : ""}`}
+          onDragOver={(e) => handleDragOver(e, "__root__")}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, null)}
+        >
+          {sueltas.length === 0 && dragOverTarget === "__root__" && (
+            <div className="px-3 py-1.5 text-[10px] text-[var(--color-ink-muted)] italic">Soltar aqui (sueltas)</div>
+          )}
+          {sueltas.map((escena) => (
+            <EscenaRow key={escena.id} escena={escena} selected={escena.id === selectedId} paddingLeft={12} onSelect={onSelect} onDelete={onDeleteEscena} personajes={personajes} onDragStart={onMoveEscena ? handleDragStart : undefined} />
+          ))}
+        </div>
       </div>
 
       {/* Bottom: create buttons */}

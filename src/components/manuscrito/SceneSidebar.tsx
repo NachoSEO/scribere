@@ -460,16 +460,18 @@ function VersionesTab({
   versiones: ReturnType<typeof useEscenaVersiones>;
   saveEscena: (data: { contenido?: Record<string, unknown> | null }) => void;
 }) {
-  const [creating, setCreating] = useState(false);
-  const [nombre, setNombre] = useState("");
   const [previewId, setPreviewId] = useState<string | null>(null);
 
   const handleCreate = async () => {
-    const trimmed = nombre.trim();
-    if (!trimmed) return;
-    await versiones.create({ nombre: trimmed, contenido: escena?.contenido ?? null });
-    setNombre("");
-    setCreating(false);
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const yyyy = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const min = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    const nombre = `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+    await versiones.create({ nombre, contenido: escena?.contenido ?? null });
   };
 
   const formatDate = (iso: string) => {
@@ -483,43 +485,12 @@ function VersionesTab({
 
   return (
     <div className="p-3 space-y-3">
-      {creating ? (
-        <div className="space-y-2">
-          <input
-            autoFocus
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreate();
-              if (e.key === "Escape") { setCreating(false); setNombre(""); }
-            }}
-            placeholder="Nombre de la versión..."
-            className="w-full rounded border border-[var(--color-border)] bg-[var(--color-cream)] px-2 py-1.5 text-xs text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:border-[var(--color-accent)] focus:outline-none"
-          />
-          <div className="flex gap-1.5">
-            <button
-              onClick={handleCreate}
-              disabled={!nombre.trim()}
-              className="flex-1 rounded bg-[var(--color-accent)] px-2 py-1 text-[11px] font-medium text-white hover:bg-[var(--color-accent-dark)] disabled:opacity-50 transition-colors"
-            >
-              Guardar
-            </button>
-            <button
-              onClick={() => { setCreating(false); setNombre(""); }}
-              className="rounded border border-[var(--color-border)] px-2 py-1 text-[11px] text-[var(--color-ink-muted)] hover:bg-[var(--color-cream-dark)] transition-colors"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          onClick={() => setCreating(true)}
-          className="w-full rounded border border-dashed border-[var(--color-border)] bg-transparent px-2 py-1.5 text-[11px] text-[var(--color-ink-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
-        >
-          Guardar versión
-        </button>
-      )}
+      <button
+        onClick={handleCreate}
+        className="w-full rounded border border-dashed border-[var(--color-border)] bg-transparent px-2 py-1.5 text-[11px] text-[var(--color-ink-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
+      >
+        Guardar versión
+      </button>
 
       {versiones.versiones.length === 0 && (
         <p className="text-[11px] text-[var(--color-ink-muted)] italic text-center py-2">
@@ -883,7 +854,7 @@ function EditableField({
         onChange={(e) => handleChange(e.target.value)}
         placeholder={placeholder}
         rows={2}
-        className="w-full rounded border border-[var(--color-border)] bg-[var(--color-cream)] px-2 py-1.5 text-xs text-[var(--color-ink-light)] placeholder:text-[var(--color-ink-muted)] focus:border-[var(--color-accent)] focus:outline-none resize-none"
+        className="w-full rounded border border-[var(--color-border)] bg-[var(--color-cream)] px-2 py-1.5 text-xs text-[var(--color-ink-light)] placeholder:text-[var(--color-ink-muted)] focus:border-[var(--color-accent)] focus:outline-none resize-y"
       />
     </div>
   );

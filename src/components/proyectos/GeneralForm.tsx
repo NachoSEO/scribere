@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useGeneral, useProyecto } from "@/lib/proyectos/hooks";
+import { useProyectosStore } from "@/lib/proyectos/store";
 import { useMundos } from "@/lib/worldbuilding/hooks";
+import { ESCENA_ESTADO_OPTIONS } from "@/types/proyectos";
+import type { EscenaEstado } from "@/types/proyectos";
 import { FormField } from "./FormField";
 
 interface GeneralFormProps {
@@ -27,6 +30,21 @@ export function GeneralForm({ projectId }: GeneralFormProps) {
   const handleNombreChange = useCallback((value: string) => {
     saveProyecto({ nombre: value });
   }, [saveProyecto]);
+
+  // Manuscript progress from store
+  const escenas = useProyectosStore((s) => s.escenas);
+  const progressData = useMemo(() => {
+    const total = escenas.length;
+    const completed = escenas.filter((e) => e.estado === "version_final").length;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const byEstado = new Map<EscenaEstado, number>();
+    for (const e of escenas) {
+      if (e.estado) {
+        byEstado.set(e.estado, (byEstado.get(e.estado) || 0) + 1);
+      }
+    }
+    return { total, completed, pct, byEstado };
+  }, [escenas]);
 
   return (
     <div className="p-6 max-w-4xl">
@@ -57,6 +75,55 @@ export function GeneralForm({ projectId }: GeneralFormProps) {
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">
         Los cambios se guardan automáticamente
       </p>
+
+      {/* Manuscript progress */}
+      {progressData.total > 0 && (
+        <div className="mt-6">
+          <Card>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-[var(--color-ink-light)]">Progreso del manuscrito</span>
+                <span className="text-xs text-[var(--color-ink-muted)] tabular-nums">
+                  {progressData.completed} de {progressData.total} escenas completadas ({progressData.pct}%)
+                </span>
+              </div>
+              {/* Progress bar */}
+              <div className="h-2 rounded-full bg-[var(--color-parchment)] overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${progressData.pct}%`,
+                    backgroundColor: progressData.pct === 100 ? "#78a064" : "var(--color-accent)",
+                  }}
+                />
+              </div>
+              {/* Breakdown by estado */}
+              <div className="flex flex-wrap gap-3">
+                {ESCENA_ESTADO_OPTIONS.map((opt) => {
+                  const count = progressData.byEstado.get(opt.value) || 0;
+                  return (
+                    <div key={opt.value} className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: opt.color }} />
+                      <span className="text-[10px] text-[var(--color-ink-muted)]">{opt.label}</span>
+                      <span className="text-[10px] font-medium text-[var(--color-ink-light)] tabular-nums">{count}</span>
+                    </div>
+                  );
+                })}
+                {(() => {
+                  const withoutEstado = progressData.total - Array.from(progressData.byEstado.values()).reduce((a, b) => a + b, 0);
+                  return withoutEstado > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full shrink-0 bg-[var(--color-border)]" />
+                      <span className="text-[10px] text-[var(--color-ink-muted)]">Sin estado</span>
+                      <span className="text-[10px] font-medium text-[var(--color-ink-light)] tabular-nums">{withoutEstado}</span>
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Core Story (2 cols) */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
