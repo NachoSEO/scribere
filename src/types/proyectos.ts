@@ -213,9 +213,17 @@ export type ArcoInsert = Pick<Arco, "nombre"> & Partial<Omit<Arco, keyof BaseEnt
 export type ArcoUpdate = Partial<Omit<Arco, keyof BaseEntity | "proyecto_id">>;
 
 // ── Escena ───────────────────────────────────────────────
-export type EscenaEstado = 'primer_borrador' | 'segundo_borrador' | 'tercer_borrador' | 'version_final';
+export type EscenaEstado = 'pendiente' | 'escribiendo' | 'completado';
 
 export const ESCENA_ESTADO_OPTIONS: { value: EscenaEstado; label: string; color: string }[] = [
+  { value: 'pendiente',    label: 'Pendiente',    color: '#9e9590' },
+  { value: 'escribiendo',  label: 'Escribiendo',  color: '#55699b' },
+  { value: 'completado',   label: 'Completado',   color: '#78a064' },
+];
+
+export type EscenaFaseEscritura = 'primer_borrador' | 'segundo_borrador' | 'tercer_borrador' | 'version_final';
+
+export const ESCENA_FASE_ESCRITURA_OPTIONS: { value: EscenaFaseEscritura; label: string; color: string }[] = [
   { value: 'primer_borrador',   label: '1er borrador',    color: '#9e9590' },
   { value: 'segundo_borrador',  label: '2do borrador',    color: '#55699b' },
   { value: 'tercer_borrador',   label: '3er borrador',    color: '#93709e' },
@@ -233,6 +241,7 @@ export interface Escena extends BaseEntity {
   objetivo: string;
   contenido: Record<string, unknown> | null;
   estado: EscenaEstado;
+  fase_escritura: EscenaFaseEscritura;
   posicion: number;
 }
 

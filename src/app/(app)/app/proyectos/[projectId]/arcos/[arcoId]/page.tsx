@@ -10,9 +10,7 @@ import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
 import { LinkedEntities } from "@/components/proyectos/LinkedEntities";
 import { EntityPreviewPanel } from "@/components/proyectos/EntityPreviewPanel";
 import type { MentionType } from "@/lib/proyectos/entity-config";
-
-const selectClasses =
-  "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 export default function ArcoDetailPage({
   params,
@@ -156,29 +154,21 @@ export default function ArcoDetailPage({
             <div className="space-y-2.5">
               <div>
                 <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Hito de origen</label>
-                <select
+                <CustomSelect
                   value={arco.hito_origen_id ?? ""}
-                  onChange={(e) => save({ hito_origen_id: e.target.value || null })}
-                  className={selectClasses}
-                >
-                  <option value="">Sin hito de origen</option>
-                  {hitos.map((h) => (
-                    <option key={h.id} value={h.id}>{h.hito || "Sin nombre"}</option>
-                  ))}
-                </select>
+                  onChange={(v) => save({ hito_origen_id: v || null })}
+                  options={hitos.map((h) => ({ value: h.id, label: h.hito || "Sin nombre" }))}
+                  placeholder="Sin hito de origen"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Hito de destino</label>
-                <select
+                <CustomSelect
                   value={arco.hito_destino_id ?? ""}
-                  onChange={(e) => save({ hito_destino_id: e.target.value || null })}
-                  className={selectClasses}
-                >
-                  <option value="">Sin hito de destino</option>
-                  {hitos.map((h) => (
-                    <option key={h.id} value={h.id}>{h.hito || "Sin nombre"}</option>
-                  ))}
-                </select>
+                  onChange={(v) => save({ hito_destino_id: v || null })}
+                  options={hitos.map((h) => ({ value: h.id, label: h.hito || "Sin nombre" }))}
+                  placeholder="Sin hito de destino"
+                />
               </div>
             </div>
           </div>

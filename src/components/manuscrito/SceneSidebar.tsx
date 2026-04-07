@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { usePersonajes, useEscenaPersonajes, useEscenaEventos, useEscena, useEscenaVersiones, useEscenaTareas, useIdeas, useEscenaIdeas } from "@/lib/proyectos/hooks";
-import { ESCENA_ESTADO_OPTIONS } from "@/types/proyectos";
-import type { EscenaEstado } from "@/types/proyectos";
+import { ESCENA_ESTADO_OPTIONS, ESCENA_FASE_ESCRITURA_OPTIONS } from "@/types/proyectos";
+import type { EscenaEstado, EscenaFaseEscritura } from "@/types/proyectos";
 import { useProyectosStore } from "@/lib/proyectos/store";
 import { ENTITY_TYPE_CONFIG } from "@/lib/proyectos/entity-config";
 import { getMentionEntityUrl } from "@/lib/proyectos/entity-config";
 import { renderCleanContent } from "@/lib/manuscrito/render-clean-html";
 import { Sidebar as CorrectorSidebar } from "@/components/corrector/Sidebar";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 // ── Entity detail panels ─────────────────────────────────
 
@@ -301,25 +302,43 @@ export function SceneSidebar({
               </div>
             </div>
 
+            {/* Fase de escritura */}
+            <div>
+              <h4 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-1.5">Fase de escritura</h4>
+              <div className="flex flex-wrap gap-1">
+                {ESCENA_FASE_ESCRITURA_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => saveEscena({ fase_escritura: opt.value })}
+                    className="rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors"
+                    style={{
+                      backgroundColor: escena?.fase_escritura === opt.value ? `${opt.color}30` : 'transparent',
+                      color: escena?.fase_escritura === opt.value ? opt.color : 'var(--color-ink-muted)',
+                      border: `1px solid ${escena?.fase_escritura === opt.value ? opt.color : 'var(--color-border)'}`,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* POV */}
             <div>
               <h4 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-1">POV</h4>
-              <select
+              <CustomSelect
                 value={escena?.pov_personaje_id ?? ""}
-                onChange={(e) => {
-                  const pid = e.target.value || null;
+                onChange={(v) => {
+                  const pid = v || null;
                   saveEscena({ pov_personaje_id: pid });
                   if (pid && !personajeIds.includes(pid)) {
                     epLinks.add(pid);
                   }
                 }}
-                className="w-full rounded border border-[var(--color-border)] bg-[var(--color-cream)] px-2 py-1 text-[11px] text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-              >
-                <option value="">Sin POV</option>
-                {personajes.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nombre}</option>
-                ))}
-              </select>
+                options={personajes.map((p) => ({ value: p.id, label: p.nombre }))}
+                placeholder="Sin POV"
+                className="text-[11px]"
+              />
             </div>
 
             {/* Context selectors */}
@@ -970,16 +989,13 @@ function ContextSelector({
     <div className="flex items-center gap-2">
       <span className="shrink-0 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
       <label className="text-[10px] text-[var(--color-ink-muted)] font-medium shrink-0 w-8">{label}</label>
-      <select
+      <CustomSelect
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 min-w-0 rounded border border-[var(--color-border)] bg-[var(--color-cream)] px-1.5 py-1 text-[11px] text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-      >
-        <option value="">—</option>
-        {options.map((o) => (
-          <option key={o.id} value={o.id}>{o.nombre}</option>
-        ))}
-      </select>
+        onChange={onChange}
+        options={options.map((o) => ({ value: o.id, label: o.nombre }))}
+        placeholder="—"
+        className="flex-1 min-w-0 text-[11px]"
+      />
     </div>
   );
 }
@@ -996,16 +1012,13 @@ function AddEntityDropdown({
   if (options.length === 0) return null;
 
   return (
-    <select
+    <CustomSelect
       value=""
-      onChange={(e) => { if (e.target.value) onAdd(e.target.value); }}
-      className="w-full rounded border border-dashed border-[var(--color-border)] bg-transparent px-2 py-1 text-[11px] text-[var(--color-ink-muted)] focus:border-[var(--color-accent)] focus:outline-none cursor-pointer"
-    >
-      <option value="">{placeholder}</option>
-      {options.map((o) => (
-        <option key={o.id} value={o.id}>{o.nombre}</option>
-      ))}
-    </select>
+      onChange={(v) => { if (v) onAdd(v); }}
+      options={options.map((o) => ({ value: o.id, label: o.nombre }))}
+      placeholder={placeholder}
+      className="w-full text-[11px] text-[var(--color-ink-muted)] border-dashed"
+    />
   );
 }
 

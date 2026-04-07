@@ -4,6 +4,7 @@ import { use, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useHitos, usePersonajes } from "@/lib/proyectos/hooks";
 import { EmptyState } from "@/components/proyectos/EmptyState";
+import CustomSelect from "@/components/ui/CustomSelect";
 import type { Personaje } from "@/types/proyectos";
 
 function PovBadge({ personaje }: { personaje: Personaje }) {
@@ -70,16 +71,13 @@ export default function HitosPage({
         <h1 className="text-lg font-semibold text-[var(--color-ink)]">Hitos</h1>
         <div className="flex items-center gap-2">
           {povPersonajes.length > 0 && (
-            <select
+            <CustomSelect
               value={filterPovId}
-              onChange={(e) => setFilterPovId(e.target.value)}
-              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-cream)] px-2.5 py-1 text-xs text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-            >
-              <option value="">Todos los POV</option>
-              {povPersonajes.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre || "Sin nombre"}</option>
-              ))}
-            </select>
+              onChange={(v) => setFilterPovId(v)}
+              options={povPersonajes.map((p) => ({ value: p.id, label: p.nombre || "Sin nombre" }))}
+              placeholder="Todos los POV"
+              className="text-xs"
+            />
           )}
           <button
             onClick={() => setCreating(true)}

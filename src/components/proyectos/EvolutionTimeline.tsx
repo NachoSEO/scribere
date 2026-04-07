@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { PersonajeEvolucion, Arco, Hito, Fase, Escena } from "@/types/proyectos";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 interface EvolutionTimelineProps {
   evoluciones: PersonajeEvolucion[];
@@ -180,16 +181,13 @@ function EvolutionCard({
 
         {/* Arco selector */}
         <div className="mb-2 flex items-center gap-1.5">
-          <select
+          <CustomSelect
             value={local.arco_id ?? ""}
-            onChange={(e) => handleArcoChange(e.target.value)}
-            className="flex-1 rounded border border-[var(--color-border)] bg-[var(--color-cream)] px-2 py-1 text-xs text-[var(--color-ink-light)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin arco</option>
-            {arcos.map((arco) => (
-              <option key={arco.id} value={arco.id}>{arco.nombre}</option>
-            ))}
-          </select>
+            onChange={handleArcoChange}
+            options={arcos.map((arco) => ({ value: arco.id, label: arco.nombre }))}
+            placeholder="Sin arco"
+            className="flex-1 text-xs"
+          />
           {local.arco_id && (
             <Link
               href={`/app/proyectos/${projectId}/arcos/${local.arco_id}`}
@@ -207,16 +205,13 @@ function EvolutionCard({
 
         {/* Escena selector */}
         <div className="mb-2 flex items-center gap-1.5">
-          <select
+          <CustomSelect
             value={local.escena_id ?? ""}
-            onChange={(e) => handleEscenaChange(e.target.value)}
-            className="flex-1 rounded border border-[var(--color-border)] bg-[var(--color-cream)] px-2 py-1 text-xs text-[var(--color-ink-light)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin escena</option>
-            {escenas.map((esc) => (
-              <option key={esc.id} value={esc.id}>{esc.resumen || "Sin resumen"}</option>
-            ))}
-          </select>
+            onChange={handleEscenaChange}
+            options={escenas.map((esc) => ({ value: esc.id, label: esc.resumen || "Sin resumen" }))}
+            placeholder="Sin escena"
+            className="flex-1 text-xs"
+          />
           {local.escena_id && (
             <Link
               href={`/app/proyectos/${projectId}/escenas/${local.escena_id}`}

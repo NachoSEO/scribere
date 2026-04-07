@@ -6,6 +6,7 @@ import {
   useHito, useHitos, useFases, useLugares, usePersonajes, useEventos,
   useHitoPersonajes, useHitoEventos,
 } from "@/lib/proyectos/hooks";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { FormField } from "@/components/proyectos/FormField";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
@@ -18,9 +19,6 @@ const tipoOptions = [
   { value: "cambio_de_fase", label: "Cambio de fase", color: "#fef3c7" },
   { value: "incidente_incitador", label: "Incidente incitador", color: "#fee2e2" },
 ];
-
-const selectClasses =
-  "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors";
 
 export default function HitoDetailPage({
   params,
@@ -92,8 +90,6 @@ export default function HitoDetailPage({
               label="Hito"
               value={hito.hito ?? ""}
               onChange={(v) => handleChange("hito", v)}
-              multiline
-              rows={2}
               placeholder="Qué sucede en este punto de la historia"
               projectId={projectId}
             />
@@ -162,42 +158,30 @@ export default function HitoDetailPage({
             <div className="space-y-2.5">
               <div>
                 <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Fase</label>
-                <select
+                <CustomSelect
                   value={hito.fase_id ?? ""}
-                  onChange={(e) => save({ fase_id: e.target.value || null })}
-                  className={selectClasses}
-                >
-                  <option value="">Sin fase</option>
-                  {fases.map((f) => (
-                    <option key={f.id} value={f.id}>{f.nombre || "Sin nombre"}</option>
-                  ))}
-                </select>
+                  onChange={(v) => save({ fase_id: v || null })}
+                  options={fases.map((f) => ({ value: f.id, label: f.nombre || "Sin nombre" }))}
+                  placeholder="Sin fase"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Lugar</label>
-                <select
+                <CustomSelect
                   value={hito.lugar_id ?? ""}
-                  onChange={(e) => save({ lugar_id: e.target.value || null })}
-                  className={selectClasses}
-                >
-                  <option value="">Sin lugar</option>
-                  {lugares.map((l) => (
-                    <option key={l.id} value={l.id}>{l.nombre || "Sin nombre"}</option>
-                  ))}
-                </select>
+                  onChange={(v) => save({ lugar_id: v || null })}
+                  options={lugares.map((l) => ({ value: l.id, label: l.nombre || "Sin nombre" }))}
+                  placeholder="Sin lugar"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">POV Personaje</label>
-                <select
+                <CustomSelect
                   value={hito.pov_personaje_id ?? ""}
-                  onChange={(e) => save({ pov_personaje_id: e.target.value || null })}
-                  className={selectClasses}
-                >
-                  <option value="">Sin POV</option>
-                  {personajes.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nombre || "Sin nombre"}</option>
-                  ))}
-                </select>
+                  onChange={(v) => save({ pov_personaje_id: v || null })}
+                  options={personajes.map((p) => ({ value: p.id, label: p.nombre || "Sin nombre" }))}
+                  placeholder="Sin POV"
+                />
               </div>
             </div>
           </div>

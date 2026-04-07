@@ -7,6 +7,7 @@ import { useMundos } from "@/lib/worldbuilding/hooks";
 import { ESCENA_ESTADO_OPTIONS } from "@/types/proyectos";
 import type { EscenaEstado } from "@/types/proyectos";
 import { FormField } from "./FormField";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 interface GeneralFormProps {
   projectId: string;
@@ -23,8 +24,8 @@ export function GeneralForm({ projectId }: GeneralFormProps) {
     save({ [key]: value });
   }, [save]);
 
-  const handleMundoChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    saveProyecto({ mundo_id: e.target.value || null });
+  const handleMundoChange = useCallback((value: string) => {
+    saveProyecto({ mundo_id: value || null });
   }, [saveProyecto]);
 
   const handleNombreChange = useCallback((value: string) => {
@@ -35,7 +36,7 @@ export function GeneralForm({ projectId }: GeneralFormProps) {
   const escenas = useProyectosStore((s) => s.escenas);
   const progressData = useMemo(() => {
     const total = escenas.length;
-    const completed = escenas.filter((e) => e.estado === "version_final").length;
+    const completed = escenas.filter((e) => e.estado === "completado").length;
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     const byEstado = new Map<EscenaEstado, number>();
     for (const e of escenas) {
@@ -59,16 +60,13 @@ export function GeneralForm({ projectId }: GeneralFormProps) {
           />
         </div>
         <div className="pt-1">
-          <select
+          <CustomSelect
             value={proyecto?.mundo_id ?? ""}
             onChange={handleMundoChange}
-            className="rounded-full border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1 text-xs text-[var(--color-accent)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
-          >
-            <option value="">Sin mundo</option>
-            {mundos.map((m) => (
-              <option key={m.id} value={m.id}>{m.nombre || "Mundo sin nombre"}</option>
-            ))}
-          </select>
+            options={mundos.map((m) => ({ value: m.id, label: m.nombre || "Mundo sin nombre" }))}
+            placeholder="Sin mundo"
+            className="rounded-full px-3 py-1 text-xs text-[var(--color-accent)]"
+          />
         </div>
       </div>
 

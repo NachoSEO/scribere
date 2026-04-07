@@ -6,6 +6,7 @@ import { useFases, useHitos, useArcos, useEscenas, usePersonajes } from "@/lib/p
 import { TIPO_RESOLUCION_OPTIONS, ESCENA_ESTADO_OPTIONS } from "@/types/proyectos";
 import type { Fase, Hito, Arco, Escena, Personaje } from "@/types/proyectos";
 import { EmptyState } from "@/components/proyectos/EmptyState";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 // ── Spine data assembly ─────────────────────────────────────
 
@@ -96,6 +97,12 @@ export default function EstructuraPage({
 
   const [filterMode, setFilterMode] = useState<FilterMode>("todo");
   const [filterPovId, setFilterPovId] = useState<string>("");
+
+  // Only show personajes that are used as POV in at least one hito
+  const povPersonajes = useMemo(() => {
+    const ids = new Set(hitos.map((h) => h.pov_personaje_id).filter(Boolean));
+    return personajes.filter((p) => ids.has(p.id));
+  }, [hitos, personajes]);
 
   // Filter spine data by POV personaje
   const filtered = useMemo(() => {
@@ -239,16 +246,13 @@ export default function EstructuraPage({
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold text-[var(--color-ink)]">Estructura</h1>
         <div className="flex items-center gap-3">
-          <select
+          <CustomSelect
             value={filterPovId}
-            onChange={(e) => setFilterPovId(e.target.value)}
-            className="rounded-lg border border-[var(--color-border)] bg-[var(--color-cream)] px-2.5 py-1 text-xs text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-          >
-            <option value="">Todos los POV</option>
-            {personajes.map((p) => (
-              <option key={p.id} value={p.id}>{p.nombre || "Sin nombre"}</option>
-            ))}
-          </select>
+            onChange={(v) => setFilterPovId(v)}
+            options={povPersonajes.map((p) => ({ value: p.id, label: p.nombre || "Sin nombre" }))}
+            placeholder="Todos los POV"
+            className="text-xs"
+          />
           <div className="flex rounded-lg border border-[var(--color-border)] bg-[var(--color-cream)] p-0.5">
             {(["todo", "hitos", "arcos", "escenas"] as const).map((mode) => (
               <button

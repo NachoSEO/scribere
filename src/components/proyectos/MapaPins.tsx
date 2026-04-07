@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import tippy from "tippy.js";
 import type { Instance as TippyInstance } from "tippy.js";
 import type { LugarPin, LugarRuta } from "@/types/proyectos";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 export interface LugarPreviewData {
   id: string;
@@ -81,6 +82,7 @@ export function MapaPins({
   const [selectedLugarId, setSelectedLugarId] = useState<string>("");
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [nearestPin, setNearestPin] = useState<string | null>(null);
 
   // Create/update tippy instances for preview cards
   useEffect(() => {
@@ -130,6 +132,40 @@ export function MapaPins({
     (l) => !pins.some((p) => p.lugar_id === l.id)
   );
 
+  // Snap-to-pin: find nearest pin within threshold
+  const findNearestPin = useCallback(
+    (x: number, y: number): LugarPin | null => {
+      const SNAP_THRESHOLD = 3; // percentage units
+      let closest: LugarPin | null = null;
+      let closestDist = Infinity;
+      for (const pin of pins) {
+        const dist = Math.sqrt((pin.x - x) ** 2 + (pin.y - y) ** 2);
+        if (dist < SNAP_THRESHOLD && dist < closestDist) {
+          closest = pin;
+          closestDist = dist;
+        }
+      }
+      return closest;
+    },
+    [pins]
+  );
+
+  const handleMapMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!isPlacingRoutePoint) {
+        if (nearestPin) setNearestPin(null);
+        return;
+      }
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const x = Math.round(((e.clientX - rect.left) / rect.width) * 10000) / 100;
+      const y = Math.round(((e.clientY - rect.top) / rect.height) * 10000) / 100;
+      const snap = findNearestPin(x, y);
+      setNearestPin(snap?.lugar_id ?? null);
+    },
+    [isPlacingRoutePoint, findNearestPin, nearestPin]
+  );
+
   const handleMapClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = containerRef.current?.getBoundingClientRect();
@@ -138,9 +174,15 @@ export function MapaPins({
       const x = Math.round(((e.clientX - rect.left) / rect.width) * 10000) / 100;
       const y = Math.round(((e.clientY - rect.top) / rect.height) * 10000) / 100;
 
-      // Route point placement takes priority
+      // Route point placement takes priority — snap to nearest pin if close
       if (onMapClick && isPlacingRoutePoint) {
-        onMapClick(x, y);
+        const snap = findNearestPin(x, y);
+        if (snap) {
+          onMapClick(snap.x, snap.y);
+        } else {
+          onMapClick(x, y);
+        }
+        setNearestPin(null);
         return;
       }
 
@@ -273,18 +315,13 @@ export function MapaPins({
 
       {placingPin && (
         <div className="flex items-center gap-2 rounded-lg border border-[var(--color-accent-light)] bg-[var(--color-cream)] p-2">
-          <select
+          <CustomSelect
             value={selectedLugarId}
-            onChange={(e) => setSelectedLugarId(e.target.value)}
-            className="flex-1 rounded-md border border-[var(--color-border)] bg-white px-2 py-1 text-xs text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-          >
-            <option value="">Selecciona un lugar...</option>
-            {availableLugares.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.nombre || "Sin nombre"}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setSelectedLugarId(v)}
+            options={availableLugares.map((l) => ({ value: l.id, label: l.nombre || "Sin nombre" }))}
+            placeholder="Selecciona un lugar..."
+            className="flex-1 text-xs"
+          />
           <span className="text-xs text-[var(--color-ink-muted)]">
             {selectedLugarId ? "Haz clic en el mapa" : ""}
           </span>
@@ -300,6 +337,8 @@ export function MapaPins({
       <div
         ref={containerRef}
         onClick={handleMapClick}
+        onMouseMove={handleMapMouseMove}
+        onMouseLeave={() => setNearestPin(null)}
         className={`relative rounded-lg overflow-hidden border border-[var(--color-border)] ${
           (placingPin && selectedLugarId) || isPlacingRoutePoint ? "cursor-crosshair" : ""
         }`}
@@ -341,29 +380,42 @@ export function MapaPins({
 
         {/* Route point dots */}
         {rutas?.map((ruta) =>
-          ruta.puntos.map((punto, idx) => (
-            <div
-              key={`${ruta.id}-${idx}`}
-              className="absolute pointer-events-none flex items-center justify-center"
-              style={{
-                left: `${punto.x}%`,
-                top: `${punto.y}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            >
+          ruta.puntos.map((punto, idx) => {
+            const waypointName = punto.lugar_id
+              ? lugares.find((l) => l.id === punto.lugar_id)?.nombre
+              : null;
+            return (
               <div
-                className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-white border border-white/50"
+                key={`${ruta.id}-${idx}`}
+                className="absolute pointer-events-none flex items-center justify-center"
                 style={{
-                  backgroundColor: ruta.color,
-                  fontSize: "7px",
-                  fontWeight: 600,
-                  lineHeight: 1,
+                  left: `${punto.x}%`,
+                  top: `${punto.y}%`,
+                  transform: "translate(-50%, -50%)",
                 }}
               >
-                {idx + 1}
+                <div
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-white border border-white/50"
+                  style={{
+                    backgroundColor: ruta.color,
+                    fontSize: "7px",
+                    fontWeight: 600,
+                    lineHeight: 1,
+                  }}
+                >
+                  {idx + 1}
+                </div>
+                {waypointName && (
+                  <div
+                    className="absolute top-full mt-0.5 whitespace-nowrap text-[8px] font-semibold px-1 rounded"
+                    style={{ color: ruta.color, backgroundColor: `${ruta.color}18` }}
+                  >
+                    {waypointName}
+                  </div>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
 
         {pins.map((pin) => (
@@ -382,6 +434,13 @@ export function MapaPins({
             onMouseEnter={() => setHoveredPin(pin.lugar_id)}
             onMouseLeave={() => setHoveredPin(null)}
           >
+            {/* Snap highlight ring */}
+            {nearestPin === pin.lugar_id && isPlacingRoutePoint && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ transform: "translate(0, -50%)" }}>
+                <div className="w-10 h-10 rounded-full border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/10 animate-pulse" />
+              </div>
+            )}
+
             {/* Pin marker */}
             <button
               onClick={(e) => {
@@ -393,7 +452,7 @@ export function MapaPins({
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                fill="var(--color-accent)"
+                fill="#dc2626"
                 className="w-7 h-7 drop-shadow-md hover:scale-110 transition-transform"
               >
                 <path
@@ -434,7 +493,7 @@ export function MapaPins({
               key={pin.lugar_id}
               className="inline-flex items-center gap-1 rounded-full border border-[var(--color-accent-light)] px-2 py-0.5 text-xs text-[var(--color-ink)]"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="var(--color-accent)" className="w-3 h-3">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#dc2626" className="w-3 h-3">
                 <path fillRule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clipRule="evenodd" />
               </svg>
               <button

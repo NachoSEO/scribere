@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 interface JunctionSelectorProps {
   label: string;
@@ -41,9 +42,9 @@ export function JunctionSelector({
     [options, linkedIds]
   );
 
-  const handleAdd = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (e.target.value) {
-      onAdd(e.target.value);
+  const handleAdd = (value: string) => {
+    if (value) {
+      onAdd(value);
       setAdding(false);
     }
   };
@@ -65,18 +66,13 @@ export function JunctionSelector({
       </div>
 
       {adding && (
-        <select
-          autoFocus
+        <CustomSelect
+          value=""
           onChange={handleAdd}
-          onBlur={() => setAdding(false)}
-          defaultValue=""
-          className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-        >
-          <option value="" disabled>Seleccionar...</option>
-          {available.map((o) => (
-            <option key={o.id} value={o.id}>{o.nombre || "Sin nombre"}</option>
-          ))}
-        </select>
+          options={available.map((o) => ({ value: o.id, label: o.nombre || "Sin nombre" }))}
+          placeholder="Seleccionar..."
+          className="w-full"
+        />
       )}
 
       {linked.length === 0 && !adding && (

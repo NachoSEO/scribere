@@ -18,11 +18,11 @@ import {
 } from "@/components/marketing/mocks";
 
 export const metadata: Metadata = {
-  title: "Scritura — Herramienta para escritores en espanol",
+  title: "Scritura — Herramienta para escritores",
   description:
-    "Escribe, planifica y construye tu novela en espanol. Corrector de estilo, planificador con personajes, arcos y estructura, editor de manuscrito con @menciones, y worldbuilding con mapas. Gratis.",
+    "Escribe, planifica y construye tu novela. Corrector de estilo, planificador con personajes, arcos y estructura, editor de manuscrito con @menciones, y worldbuilding con mapas. Gratis.",
   openGraph: {
-    title: "Scritura — Herramienta para escritores en espanol",
+    title: "Scritura — Herramienta para escritores",
     description:
       "Escribe, planifica y construye tu novela con Scritura. Corrector de estilo, planificador de novelas, editor de manuscrito y worldbuilding. 100% gratis.",
   },
@@ -60,7 +60,7 @@ const jsonLd = {
   operatingSystem: "Web",
   offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
   description:
-    "Herramienta para escritores en espanol. Corrector de estilo, planificador de novelas, editor de manuscrito y worldbuilding.",
+    "Herramienta para escritores. Corrector de estilo, planificador de novelas, editor de manuscrito y worldbuilding.",
   inLanguage: "es",
 };
 
@@ -86,7 +86,7 @@ export default function MarketingPage() {
             La herramienta completa
             <br />
             <span className="text-[var(--color-accent)]">
-              para escribir tu novela en espanol
+              para escribir tu novela
             </span>
           </>
         }
@@ -99,7 +99,7 @@ export default function MarketingPage() {
       <BenefitStrip
         items={[
           { value: "10 categorias", label: "de analisis de estilo" },
-          { value: "11 herramientas", label: "de planificacion" },
+          { value: "12+ herramientas", label: "de planificacion" },
           { value: "Editor con @", label: "menciones a entidades" },
           { value: "100% gratis", label: "sin limites ni publicidad" },
         ]}
@@ -362,6 +362,54 @@ export default function MarketingPage() {
                 "Cada arco conecta un hito de origen con un hito de destino y se resuelve de una forma: Si (el personaje consigue lo que quiere), Si pero (lo consigue, con un precio), No y (fracasa, y las cosas empeoran) o No (fracasa). Este sistema te obliga a pensar en como termina cada trama, no solo en como empieza.",
               visual: <MockYBNAArcs />,
             },
+            {
+              title: "Control total del progreso de tu manuscrito",
+              description:
+                "Cada escena tiene un estado de trabajo: pendiente, escribiendo o completado. La barra de progreso en la vista general se actualiza automaticamente. Ademas, puedes registrar en que fase de escritura esta cada escena: primer borrador, segundo borrador, tercer borrador o version final.",
+              visual: (
+                <div className="rounded-xl border border-[var(--color-border)] bg-white p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-2">Estado</p>
+                      <div className="flex gap-2">
+                        {[
+                          { label: "Pendiente", color: "#9e9590" },
+                          { label: "Escribiendo", color: "#55699b", active: true },
+                          { label: "Completado", color: "#78a064" },
+                        ].map((s) => (
+                          <span key={s.label} className="rounded-full px-3 py-1 text-xs font-medium" style={{
+                            backgroundColor: s.active ? `${s.color}30` : "transparent",
+                            color: s.active ? s.color : "var(--color-ink-muted)",
+                            border: `1px solid ${s.active ? s.color : "var(--color-border)"}`,
+                          }}>{s.label}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium mb-2">Fase de escritura</p>
+                      <div className="flex gap-2">
+                        {[
+                          { label: "1er borrador", color: "#9e9590" },
+                          { label: "2do borrador", color: "#55699b", active: true },
+                          { label: "3er borrador", color: "#93709e" },
+                          { label: "Version final", color: "#78a064" },
+                        ].map((s) => (
+                          <span key={s.label} className="rounded-full px-3 py-1 text-xs font-medium" style={{
+                            backgroundColor: s.active ? `${s.color}30` : "transparent",
+                            color: s.active ? s.color : "var(--color-ink-muted)",
+                            border: `1px solid ${s.active ? s.color : "var(--color-border)"}`,
+                          }}>{s.label}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs"><span className="text-[var(--color-ink-light)]">Progreso</span><span className="text-[var(--color-ink-muted)]">12 de 24 completadas (50%)</span></div>
+                      <div className="h-2 rounded-full bg-[var(--color-parchment)] overflow-hidden"><div className="h-full w-1/2 rounded-full bg-[var(--color-accent)]" /></div>
+                    </div>
+                  </div>
+                </div>
+              ),
+            },
           ]}
         />
 
@@ -376,6 +424,8 @@ export default function MarketingPage() {
               { name: "Facciones", href: "/planificador/facciones" },
               { name: "Lugares y mapas", href: "/planificador/lugares" },
               { name: "Relaciones", href: "/planificador/relaciones" },
+              { name: "Eventos y cronologia", href: "/planificador/eventos" },
+              { name: "Tareas", href: "/planificador/tareas" },
             ].map((tool) => (
               <Link
                 key={tool.name}
@@ -392,7 +442,7 @@ export default function MarketingPage() {
               href="/planificador"
               className="text-sm font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent-dark)]"
             >
-              Ver las 11 herramientas →
+              Ver todas las herramientas →
             </Link>
           </p>
         </div>
@@ -416,7 +466,8 @@ export default function MarketingPage() {
             La mayoria de escritores planifican en un sitio y escriben en otro.
             Cuando necesitas recordar el nombre del tabernero o en que capitulo
             aparecio el antagonista, pierdes diez minutos buscando. En Scritura,
-            escribes @ y tu personaje aparece.
+            escribes @ y tu personaje aparece. La barra lateral de navegacion se
+            colapsa para darte mas espacio cuando escribes.
           </p>
         </div>
 
@@ -506,7 +557,7 @@ export default function MarketingPage() {
             {
               title: "Mapas interactivos con marcadores",
               description:
-                "Sube la imagen de tu mapa y coloca marcadores haciendo clic. Cada marcador se vincula a un lugar con su ficha completa. Pasa el cursor por encima y ve la descripcion. Los lugares se organizan en jerarquia: mundo, continente, pais, region, ciudad, pueblo, edificio. Navega con migas de pan entre niveles.",
+                "Sube la imagen de tu mapa y coloca marcadores haciendo clic. Cada marcador se vincula a un lugar con su ficha completa. Pasa el cursor por encima y ve la descripcion. Dibuja rutas de personajes que conectan diferentes lugares del mapa. Cada punto de la ruta puede anclarse a un marcador existente, y la ruta muestra los nombres de los lugares por los que pasa. Los lugares se organizan en jerarquia: mundo, continente, pais, region, ciudad, pueblo, edificio. Navega con migas de pan entre niveles.",
               visual: <MockMapView />,
             },
           ]}
@@ -719,7 +770,7 @@ export default function MarketingPage() {
       {/* ─── FINAL CTA ─── */}
       <CTASection
         title="Tu novela esta esperando"
-        subtitle="Corrige, planifica, escribe y construye. Todo en un sitio, gratis, en espanol."
+        subtitle="Corrige, planifica, escribe y construye. Todo en un sitio, gratis."
         ctaText="Empieza gratis con Google"
       />
     </>

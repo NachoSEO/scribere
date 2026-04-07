@@ -6,6 +6,7 @@ import { useLugares, useLugarMapa } from "@/lib/proyectos/hooks";
 import { LUGAR_TIPOS } from "@/types/proyectos";
 import type { Lugar, LugarTipo, LugarPin } from "@/types/proyectos";
 import { EmptyState } from "@/components/proyectos/EmptyState";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { MapaPins } from "@/components/proyectos/MapaPins";
 import type { LugarPreviewData } from "@/components/proyectos/MapaPins";
 
@@ -230,18 +231,16 @@ export default function LugaresPage({
       {/* Filters */}
       {lugares.length > 0 && (
         <div className="mt-3 flex items-center gap-2">
-          <select
+          <CustomSelect
             value={filterTipo}
-            onChange={(e) => setFilterTipo(e.target.value as LugarTipo | "todos")}
-            className="rounded-md border border-[var(--color-border)] bg-white px-2 py-1 text-xs text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-          >
-            <option value="todos">Todos los tipos</option>
-            {LUGAR_TIPOS.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setFilterTipo(v as LugarTipo | "todos")}
+            options={[
+              { value: "todos", label: "Todos los tipos" },
+              ...LUGAR_TIPOS.map((t) => ({ value: t.value, label: t.label })),
+            ]}
+            placeholder="Todos los tipos"
+            className="text-xs"
+          />
         </div>
       )}
 

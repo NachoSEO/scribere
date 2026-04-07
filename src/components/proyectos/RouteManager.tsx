@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useLugarRutas, usePersonajes } from "@/lib/proyectos/hooks";
+import { useLugarRutas, usePersonajes, useLugares } from "@/lib/proyectos/hooks";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 const PRESET_COLORS = [
   "#8b6f47",
@@ -29,6 +30,9 @@ export function RouteManager({
 }: RouteManagerProps) {
   const { rutas, create, update, remove } = useLugarRutas(lugarId);
   const { personajes } = usePersonajes(projectId);
+  const { lugares } = useLugares(projectId);
+
+  const getLugarNombre = (id: string) => lugares.find((l) => l.id === id)?.nombre ?? "?";
 
   const [showCreate, setShowCreate] = useState(false);
   const [selectedPersonajeId, setSelectedPersonajeId] = useState("");
@@ -131,24 +135,19 @@ export function RouteManager({
             <label className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-medium block mb-1">
               Personaje
             </label>
-            <select
+            <CustomSelect
               value={selectedPersonajeId}
-              onChange={(e) => {
-                setSelectedPersonajeId(e.target.value);
+              onChange={(v) => {
+                setSelectedPersonajeId(v);
                 if (!routeName.trim()) {
-                  const p = personajes.find((p) => p.id === e.target.value);
+                  const p = personajes.find((p) => p.id === v);
                   if (p) setRouteName(p.nombre);
                 }
               }}
-              className="w-full rounded-md border border-[var(--color-border)] bg-white px-2 py-1.5 text-xs text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-            >
-              <option value="">Selecciona un personaje...</option>
-              {personajes.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre || "Sin nombre"}
-                </option>
-              ))}
-            </select>
+              options={personajes.map((p) => ({ value: p.id, label: p.nombre || "Sin nombre" }))}
+              placeholder="Selecciona un personaje..."
+              className="w-full text-xs"
+            />
           </div>
 
           {/* Color picker */}
@@ -236,6 +235,15 @@ export function RouteManager({
                   {getPersonajeName(ruta.personaje_id)} &middot;{" "}
                   {ruta.puntos.length} puntos
                 </p>
+                {/* Show waypoint place names */}
+                {(() => {
+                  const waypoints = ruta.puntos.filter((p) => p.lugar_id).map((p) => getLugarNombre(p.lugar_id!));
+                  return waypoints.length > 0 ? (
+                    <p className="text-[10px] text-[var(--color-accent)] truncate mt-0.5">
+                      {waypoints.join(" → ")}
+                    </p>
+                  ) : null;
+                })()}
               </div>
               {editingRouteId !== ruta.id && (
                 <div className="flex items-center gap-1.5">

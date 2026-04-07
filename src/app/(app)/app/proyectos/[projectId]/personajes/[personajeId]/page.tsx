@@ -23,6 +23,7 @@ import { CharacterRelationCard } from "@/components/proyectos/CharacterRelationC
 import { EvolutionTimeline } from "@/components/proyectos/EvolutionTimeline";
 import { FormField } from "@/components/proyectos/FormField";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 export default function PersonajeDetailPage({
   params,
@@ -86,8 +87,8 @@ export default function PersonajeDetailPage({
     setAddingRelacion(false);
   }, [createRelacion, personajeId, selectedId]);
 
-  const handleFaccionChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    save({ faccion_id: e.target.value || null });
+  const handleFaccionChange = useCallback((v: string) => {
+    save({ faccion_id: v || null });
   }, [save]);
 
   const handleAddEvolucion = useCallback(async () => {
@@ -137,24 +138,23 @@ export default function PersonajeDetailPage({
                   className="border-0 bg-transparent text-xs text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none w-40"
                 />
               ) : (
-                <select
+                <CustomSelect
                   value={personaje.tipo}
-                  onChange={(e) => {
-                    if (e.target.value === "__custom__") {
+                  onChange={(v) => {
+                    if (v === "__custom__") {
                       setShowCustomTipo(true);
                       save({ tipo: "" });
                     } else {
-                      save({ tipo: e.target.value });
+                      save({ tipo: v });
                     }
                   }}
-                  className="border-0 bg-transparent text-xs text-[var(--color-ink)] focus:outline-none cursor-pointer"
-                >
-                  <option value="">Sin tipo</option>
-                  {PERSONAJE_TIPO_OPTIONS.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                  <option value="__custom__">Otro...</option>
-                </select>
+                  options={[
+                    ...PERSONAJE_TIPO_OPTIONS.map((t) => ({ value: t, label: t })),
+                    { value: "__custom__", label: "Otro..." },
+                  ]}
+                  placeholder="Sin tipo"
+                  className="border-0 bg-transparent text-xs"
+                />
               )}
             </div>
             <div className="flex items-center gap-1.5">
@@ -165,16 +165,13 @@ export default function PersonajeDetailPage({
                   href={`/app/proyectos/${projectId}/facciones/${personaje.faccion_id}`}
                 />
               ) : (
-                <select
+                <CustomSelect
                   value=""
                   onChange={handleFaccionChange}
-                  className="border-0 bg-transparent text-xs text-[var(--color-ink-muted)] focus:outline-none cursor-pointer"
-                >
-                  <option value="">Sin facción</option>
-                  {facciones.map((f) => (
-                    <option key={f.id} value={f.id}>{f.nombre || "Sin nombre"}</option>
-                  ))}
-                </select>
+                  options={facciones.map((f) => ({ value: f.id, label: f.nombre || "Sin nombre" }))}
+                  placeholder="Sin facción"
+                  className="border-0 bg-transparent text-xs"
+                />
               )}
               {faccionNombre && (
                 <button
@@ -262,16 +259,13 @@ export default function PersonajeDetailPage({
 
         {addingRelacion && (
           <div className="mb-3 flex gap-2">
-            <select
+            <CustomSelect
               value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-            >
-              <option value="">Seleccionar personaje...</option>
-              {unrelatedOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>{opt.nombre || "Sin nombre"}</option>
-              ))}
-            </select>
+              onChange={(v) => setSelectedId(v)}
+              options={unrelatedOptions.map((opt) => ({ value: opt.id, label: opt.nombre || "Sin nombre" }))}
+              placeholder="Seleccionar personaje..."
+              className="flex-1"
+            />
             <button
               onClick={handleAddRelacion}
               disabled={!selectedId}

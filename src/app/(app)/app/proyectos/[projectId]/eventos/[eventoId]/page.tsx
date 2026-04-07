@@ -1,19 +1,56 @@
 "use client";
 
-import { use, useState, useCallback, useMemo } from "react";
+import { use, useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useEvento, useEventos, usePersonajes, useLugares, useHitos, useEscenas, useEventoPersonajes, useEventoLugares, useEventoHitos, useEventoEscenas } from "@/lib/proyectos/hooks";
-import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
+import { FormField } from "@/components/proyectos/FormField";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { JunctionSelector } from "@/components/proyectos/JunctionSelector";
 
-const fields: FieldConfig[] = [
-  { key: "nombre", label: "Nombre", placeholder: "Nombre del evento" },
-  { key: "funcion", label: "Función", placeholder: "Qué función cumple este evento en la historia..." },
-  { key: "causa_directa", label: "Causa directa", multiline: true, rows: 3, placeholder: "Qué provoca este evento..." },
-  { key: "consecuencia_directa", label: "Consecuencia directa", multiline: true, rows: 3, placeholder: "Qué consecuencias tiene este evento..." },
-  { key: "descripcion", label: "Descripción", multiline: true, rows: 4, placeholder: "Qué sucede en este evento..." },
-];
+const inputClasses =
+  "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors";
+
+function InlineInput({
+  value,
+  onChange,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const [local, setLocal] = useState(value);
+  const isTyping = useRef(false);
+
+  useEffect(() => {
+    if (!isTyping.current) {
+      setLocal(value);
+    }
+  }, [value]);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      isTyping.current = true;
+      const newValue = e.target.value;
+      setLocal(newValue);
+      onChange(newValue);
+      setTimeout(() => { isTyping.current = false; }, 1000);
+    },
+    [onChange]
+  );
+
+  return (
+    <input
+      type="text"
+      value={local}
+      onChange={handleChange}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+}
 
 export default function EventoDetailPage({
   params,
@@ -33,17 +70,6 @@ export default function EventoDetailPage({
   const ehLinks = useEventoHitos(eventoId);
   const eeLinks = useEventoEscenas(eventoId);
   const [showDelete, setShowDelete] = useState(false);
-
-  const values = useMemo((): Record<string, string> => {
-    if (!evento) return {};
-    return {
-      nombre: evento.nombre,
-      funcion: evento.funcion,
-      causa_directa: evento.causa_directa,
-      consecuencia_directa: evento.consecuencia_directa,
-      descripcion: evento.descripcion,
-    };
-  }, [evento]);
 
   const handleChange = useCallback((key: string, value: string) => {
     save({ [key]: value });
@@ -92,57 +118,138 @@ export default function EventoDetailPage({
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-[var(--color-ink)]">
-          {evento.nombre || "Evento sin nombre"}
-        </h1>
-        <button
-          onClick={() => setShowDelete(true)}
-          className="text-xs text-[var(--color-ink-muted)] hover:text-red-600 transition-colors"
-        >
-          Eliminar
-        </button>
-      </div>
-      <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
+      <div className="max-w-3xl">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-[var(--color-ink)]">
+            {evento.nombre || "Evento sin nombre"}
+          </h1>
+          <button
+            onClick={() => setShowDelete(true)}
+            className="text-xs text-[var(--color-ink-muted)] hover:text-red-600 transition-colors"
+          >
+            Eliminar
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
-      <div className="mt-6 space-y-6">
-        <EntityForm fields={fields} values={values} onChange={handleChange} />
+        {/* Nombre + Cronologia inline */}
+        <div className="mt-4 flex gap-3">
+          <div className="flex-1">
+            <InlineInput
+              value={evento.nombre ?? ""}
+              onChange={(v) => handleChange("nombre", v)}
+              placeholder="Nombre del evento"
+              className={inputClasses}
+            />
+          </div>
+          <div className="w-40">
+            <InlineInput
+              value={evento.cronologia ?? ""}
+              onChange={(v) => handleChange("cronologia", v)}
+              placeholder="Ej: 1547, Era 3..."
+              className={inputClasses}
+            />
+          </div>
+        </div>
 
-        <JunctionSelector
-          label="Personajes involucrados"
-          linkedIds={personajeIds}
-          options={personajes}
-          onAdd={epLinks.add}
-          onRemove={epLinks.remove}
-          junctionMap={personajeJunctionMap}
-        />
+        <div className="mt-5 space-y-4">
+          {/* Causa y efecto card */}
+          <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-2">
+              Causa y efecto
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Causa directa"
+                value={evento.causa_directa ?? ""}
+                onChange={(v) => handleChange("causa_directa", v)}
+                multiline
+                rows={3}
+                placeholder="Qué provoca este evento..."
+                projectId={projectId}
+              />
+              <FormField
+                label="Consecuencia directa"
+                value={evento.consecuencia_directa ?? ""}
+                onChange={(v) => handleChange("consecuencia_directa", v)}
+                multiline
+                rows={3}
+                placeholder="Qué consecuencias tiene este evento..."
+                projectId={projectId}
+              />
+            </div>
+          </div>
 
-        <JunctionSelector
-          label="Lugares"
-          linkedIds={lugarIds}
-          options={lugares}
-          onAdd={elLinks.add}
-          onRemove={elLinks.remove}
-          junctionMap={lugarJunctionMap}
-        />
+          {/* Detalle card */}
+          <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-2">
+              Detalle
+            </h2>
+            <div className="space-y-3">
+              <FormField
+                label="Función"
+                value={evento.funcion ?? ""}
+                onChange={(v) => handleChange("funcion", v)}
+                placeholder="Qué función cumple este evento en la historia..."
+                projectId={projectId}
+              />
+              <FormField
+                label="Descripción"
+                value={evento.descripcion ?? ""}
+                onChange={(v) => handleChange("descripcion", v)}
+                multiline
+                rows={4}
+                placeholder="Qué sucede en este evento..."
+                projectId={projectId}
+              />
+            </div>
+          </div>
 
-        <JunctionSelector
-          label="Hitos relacionados"
-          linkedIds={hitoIds}
-          options={hitoItems}
-          onAdd={ehLinks.add}
-          onRemove={ehLinks.remove}
-          junctionMap={hitoJunctionMap}
-        />
+          {/* Relaciones card */}
+          <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold mb-2">
+              Relaciones
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              <JunctionSelector
+                label="Personajes involucrados"
+                linkedIds={personajeIds}
+                options={personajes}
+                onAdd={epLinks.add}
+                onRemove={epLinks.remove}
+                junctionMap={personajeJunctionMap}
+              />
 
-        <JunctionSelector
-          label="Escenas relacionadas"
-          linkedIds={escenaIds}
-          options={escenaItems}
-          onAdd={eeLinks.add}
-          onRemove={eeLinks.remove}
-          junctionMap={escenaJunctionMap}
-        />
+              <JunctionSelector
+                label="Lugares"
+                linkedIds={lugarIds}
+                options={lugares}
+                onAdd={elLinks.add}
+                onRemove={elLinks.remove}
+                junctionMap={lugarJunctionMap}
+              />
+
+              <JunctionSelector
+                label="Hitos relacionados"
+                linkedIds={hitoIds}
+                options={hitoItems}
+                onAdd={ehLinks.add}
+                onRemove={ehLinks.remove}
+                junctionMap={hitoJunctionMap}
+              />
+
+              <JunctionSelector
+                label="Escenas relacionadas"
+                linkedIds={escenaIds}
+                options={escenaItems}
+                onAdd={eeLinks.add}
+                onRemove={eeLinks.remove}
+                junctionMap={escenaJunctionMap}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {showDelete && (

@@ -14,9 +14,7 @@ import { LinkedEntities } from "@/components/proyectos/LinkedEntities";
 import { EntityPreviewPanel } from "@/components/proyectos/EntityPreviewPanel";
 import type { MentionType } from "@/lib/proyectos/entity-config";
 import { useDebouncedSave } from "@/lib/hooks/use-debounced-save";
-
-const selectClasses =
-  "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 export default function EscenaDetailPage({
   params,
@@ -112,43 +110,31 @@ export default function EscenaDetailPage({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Hito</label>
-                <select
+                <CustomSelect
                   value={escena.hito_id ?? ""}
-                  onChange={(e) => save({ hito_id: e.target.value || null })}
-                  className={selectClasses}
-                >
-                  <option value="">Sin hito</option>
-                  {hitoItems.map((h) => (
-                    <option key={h.id} value={h.id}>{h.nombre || "Sin nombre"}</option>
-                  ))}
-                </select>
+                  onChange={(v) => save({ hito_id: v || null })}
+                  options={hitoItems.map((h) => ({ value: h.id, label: h.nombre || "Sin nombre" }))}
+                  placeholder="Sin hito"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Arco</label>
-                <select
+                <CustomSelect
                   value={escena.arco_id ?? ""}
-                  onChange={(e) => save({ arco_id: e.target.value || null })}
-                  className={selectClasses}
-                >
-                  <option value="">Sin arco</option>
-                  {arcos.map((a) => (
-                    <option key={a.id} value={a.id}>{a.nombre || "Sin nombre"}</option>
-                  ))}
-                </select>
+                  onChange={(v) => save({ arco_id: v || null })}
+                  options={arcos.map((a) => ({ value: a.id, label: a.nombre || "Sin nombre" }))}
+                  placeholder="Sin arco"
+                />
               </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--color-ink-light)] mb-1">Lugar</label>
-              <select
+              <CustomSelect
                 value={escena.lugar_id ?? ""}
-                onChange={(e) => save({ lugar_id: e.target.value || null })}
-                className={selectClasses}
-              >
-                <option value="">Sin lugar</option>
-                {lugares.map((l) => (
-                  <option key={l.id} value={l.id}>{l.nombre || "Sin nombre"}</option>
-                ))}
-              </select>
+                onChange={(v) => save({ lugar_id: v || null })}
+                options={lugares.map((l) => ({ value: l.id, label: l.nombre || "Sin nombre" }))}
+                placeholder="Sin lugar"
+              />
             </div>
           </div>
         </div>

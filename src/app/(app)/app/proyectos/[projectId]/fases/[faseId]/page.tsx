@@ -7,7 +7,6 @@ import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm"
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 
 const fields: FieldConfig[] = [
-  { key: "nombre", label: "Nombre", placeholder: "Nombre de la fase" },
   { key: "descripcion", label: "Descripción", multiline: true, rows: 4, placeholder: "Descripción de esta fase de la historia..." },
 ];
 
@@ -53,7 +52,19 @@ export default function FaseDetailPage({
       </div>
       <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Los cambios se guardan automáticamente</p>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-4">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
+            Nombre
+          </label>
+          <input
+            type="text"
+            value={values.nombre ?? ""}
+            onChange={(e) => handleChange("nombre", e.target.value)}
+            placeholder="Nombre de la fase"
+            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
+          />
+        </div>
         <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
       </div>
 

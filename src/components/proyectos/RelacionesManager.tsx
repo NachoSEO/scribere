@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 interface Relacion {
   id: string;
@@ -65,18 +66,13 @@ export function RelacionesManager({
 
       {adding && (
         <div className="mt-2 flex gap-2">
-          <select
+          <CustomSelect
             value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            className="flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-          >
-            <option value="">Seleccionar...</option>
-            {unrelatedOptions.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.nombre || "Sin nombre"}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setSelectedId(v)}
+            options={unrelatedOptions.map((opt) => ({ value: opt.id, label: opt.nombre || "Sin nombre" }))}
+            placeholder="Seleccionar..."
+            className="flex-1"
+          />
           <button
             onClick={handleAdd}
             disabled={!selectedId}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import type { Evento } from "@/types/proyectos";
 
@@ -9,6 +10,15 @@ interface EventoTimelineProps {
 }
 
 export function EventoTimeline({ eventos, projectId }: EventoTimelineProps) {
+  const sorted = useMemo(() => {
+    return [...eventos].sort((a, b) => {
+      if (!a.cronologia && !b.cronologia) return 0;
+      if (!a.cronologia) return 1;
+      if (!b.cronologia) return -1;
+      return a.cronologia.localeCompare(b.cronologia, undefined, { numeric: true });
+    });
+  }, [eventos]);
+
   if (eventos.length === 0) {
     return (
       <p className="text-xs text-[var(--color-ink-muted)] italic mt-4">
@@ -26,7 +36,7 @@ export function EventoTimeline({ eventos, projectId }: EventoTimelineProps) {
       />
 
       <div className="space-y-4">
-        {eventos.map((evento) => (
+        {sorted.map((evento) => (
           <div key={evento.id} className="relative pl-8">
             {/* Timeline dot */}
             <div

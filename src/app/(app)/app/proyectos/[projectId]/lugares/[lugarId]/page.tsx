@@ -7,6 +7,7 @@ import { useLugar, useLugares, useLugarMapa, useLugarRutas, useEscenas } from "@
 import { useProyectosStore } from "@/lib/proyectos/store";
 import { updateLugar as updateLugarQuery } from "@/lib/proyectos/queries";
 import { createClient } from "@/lib/supabase/client";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
 import { MapaPins } from "@/components/proyectos/MapaPins";
@@ -15,7 +16,6 @@ import { LUGAR_TIPOS } from "@/types/proyectos";
 import type { LugarTipo, LugarPin } from "@/types/proyectos";
 
 const fields: FieldConfig[] = [
-  { key: "nombre", label: "Nombre", placeholder: "Nombre del lugar" },
   {
     key: "descripcion",
     label: "Descripcion",
@@ -189,11 +189,13 @@ export default function LugarDetailPage({
       if (!editingRouteId) return;
       const ruta = rutas.find((r) => r.id === editingRouteId);
       if (!ruta) return;
+      // Check if this point snapped to a pin (exact coordinate match)
+      const snappedPin = (lugar?.mapa_pins ?? []).find((p) => p.x === x && p.y === y);
       await updateRuta(editingRouteId, {
-        puntos: [...ruta.puntos, { x, y }],
+        puntos: [...ruta.puntos, { x, y, lugar_id: snappedPin?.lugar_id }],
       });
     },
-    [editingRouteId, rutas, updateRuta]
+    [editingRouteId, rutas, updateRuta, lugar?.mapa_pins]
   );
 
   const handleCreateSublugar = useCallback(async () => {
@@ -288,25 +290,16 @@ export default function LugarDetailPage({
             Lugar padre
           </p>
           <div className="flex items-center gap-2">
-            <select
+            <CustomSelect
               value={lugar.lugar_padre_id ?? ""}
-              onChange={(e) =>
-                save({
-                  lugar_padre_id: e.target.value || null,
-                })
-              }
-              className="flex-1 rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            >
-              <option value="">Sin padre (raiz)</option>
-              {availableParents.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.tipo
-                    ? `[${LUGAR_TIPOS.find((t) => t.value === l.tipo)?.label}] `
-                    : ""}
-                  {l.nombre || "Sin nombre"}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => save({ lugar_padre_id: v || null })}
+              options={availableParents.map((l) => ({
+                value: l.id,
+                label: `${l.tipo ? `[${LUGAR_TIPOS.find((t) => t.value === l.tipo)?.label}] ` : ""}${l.nombre || "Sin nombre"}`,
+              }))}
+              placeholder="Sin padre (raiz)"
+              className="flex-1"
+            />
             {parent && (
               <Link
                 href={`/app/proyectos/${projectId}/lugares/${parent.id}`}
@@ -318,7 +311,21 @@ export default function LugarDetailPage({
           </div>
         </div>
 
-        {/* Name and description */}
+        {/* Name */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
+            Nombre
+          </label>
+          <input
+            type="text"
+            value={values.nombre ?? ""}
+            onChange={(e) => handleChange("nombre", e.target.value)}
+            placeholder="Nombre del lugar"
+            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
+          />
+        </div>
+
+        {/* Description */}
         <EntityForm fields={fields} values={values} onChange={handleChange} projectId={projectId} />
 
         {/* Map */}

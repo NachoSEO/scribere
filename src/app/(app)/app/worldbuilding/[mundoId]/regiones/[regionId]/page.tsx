@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRegion, useRegiones } from "@/lib/worldbuilding/hooks";
 import { EntityForm, type FieldConfig } from "@/components/proyectos/EntityForm";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 const fields: FieldConfig[] = [
   { key: "nombre", label: "Nombre", placeholder: "Nombre de la región" },
@@ -37,8 +38,8 @@ export default function RegionDetailPage({
     router.push(`/app/worldbuilding/${mundoId}/regiones`);
   }, [remove, regionId, mundoId, router]);
 
-  const handlePadreChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    save({ region_padre_id: e.target.value || null });
+  const handlePadreChange = useCallback((v: string) => {
+    save({ region_padre_id: v || null });
   }, [save]);
 
   // Available parent regions (exclude self)
@@ -72,16 +73,12 @@ export default function RegionDetailPage({
           <label className="block text-xs font-medium text-[var(--color-ink-light)] uppercase tracking-wide">
             Región padre
           </label>
-          <select
+          <CustomSelect
             value={region.region_padre_id ?? ""}
             onChange={handlePadreChange}
-            className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] transition-colors"
-          >
-            <option value="">Sin región padre</option>
-            {parentOptions.map((r) => (
-              <option key={r.id} value={r.id}>{r.nombre || "Sin nombre"}</option>
-            ))}
-          </select>
+            options={parentOptions.map((r) => ({ value: r.id, label: r.nombre || "Sin nombre" }))}
+            placeholder="Sin región padre"
+          />
         </div>
       </div>
 

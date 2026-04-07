@@ -13,6 +13,7 @@ import { EntityBadge } from "@/components/proyectos/EntityBadge";
 import { TipoSelector } from "@/components/proyectos/TipoSelector";
 import { FormField } from "@/components/proyectos/FormField";
 import { DeleteConfirm } from "@/components/proyectos/DeleteConfirm";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 const FACCION_TIPO_OPTIONS = ["aliada", "enemiga", "rival", "neutral", "subordinada"];
 
@@ -226,16 +227,13 @@ export default function FaccionDetailPage({
 
         {addingMember && (
           <div className="mb-3 flex gap-2">
-            <select
+            <CustomSelect
               value={selectedMemberId}
-              onChange={(e) => setSelectedMemberId(e.target.value)}
-              className="flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-            >
-              <option value="">Seleccionar personaje...</option>
-              {availableMembers.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre || "Sin nombre"}</option>
-              ))}
-            </select>
+              onChange={(v) => setSelectedMemberId(v)}
+              options={availableMembers.map((p) => ({ value: p.id, label: p.nombre || "Sin nombre" }))}
+              placeholder="Seleccionar personaje..."
+              className="flex-1"
+            />
             <button
               onClick={handleAddMember}
               disabled={!selectedMemberId}
@@ -319,16 +317,13 @@ export default function FaccionDetailPage({
 
         {addingRelacion && (
           <div className="mb-3 flex gap-2">
-            <select
+            <CustomSelect
               value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:outline-none"
-            >
-              <option value="">Seleccionar facción...</option>
-              {unrelatedOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>{opt.nombre || "Sin nombre"}</option>
-              ))}
-            </select>
+              onChange={(v) => setSelectedId(v)}
+              options={unrelatedOptions.map((opt) => ({ value: opt.id, label: opt.nombre || "Sin nombre" }))}
+              placeholder="Seleccionar facción..."
+              className="flex-1"
+            />
             <button
               onClick={handleAddRelacion}
               disabled={!selectedId}
