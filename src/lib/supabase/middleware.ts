@@ -10,7 +10,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Only run auth checks for protected routes and auth pages
-  const isProtectedRoute = pathname.startsWith("/app");
+  // The corrector runs entirely in the browser, so it is public
+  const publicAppPaths = ["/app/corrector"];
+  const isPublicAppRoute = publicAppPaths.some((path) => pathname.startsWith(path));
+  const isProtectedRoute = pathname.startsWith("/app") && !isPublicAppRoute;
   const authPaths = ["/login", "/registro"];
   const isAuthRoute = authPaths.some((path) => pathname === path);
   const isAuthCallback = pathname.startsWith("/auth/callback");

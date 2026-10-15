@@ -64,9 +64,20 @@ export function WordFrequencyPanel() {
     URL.revokeObjectURL(url);
   }
 
+  // Phrases come from user text, so escape HTML before injecting the highlight markup
+  function escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   function highlightWord(text: string, word: string): string {
-    const regex = new RegExp(`\\b(${word})\\b`, "gi");
-    return text.replace(regex, '<span class="freq-highlight">$1</span>');
+    const escapedWord = escapeHtml(word).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`\\b(${escapedWord})\\b`, "gi");
+    return escapeHtml(text).replace(regex, '<span class="freq-highlight">$1</span>');
   }
 
   if (wordFrequency.length === 0) {
