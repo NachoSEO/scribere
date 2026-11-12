@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useDebouncedSave } from "@/lib/hooks/use-debounced-save";
 import { useProyectosStore } from "./store";
@@ -39,9 +39,33 @@ const sb = createClient();
 
 export function useProyectos() {
   const { proyectos, setProyectos, addProyecto, removeProyecto } = useProyectosStore();
+  const seedAttempted = useRef(false);
 
   useEffect(() => {
-    q.fetchProyectos(sb).then(setProyectos).catch(console.error);
+    let cancelled = false;
+    async function load() {
+      try {
+        const data = await q.fetchProyectos(sb);
+        if (cancelled) return;
+        if (data.length === 0 && !seedAttempted.current) {
+          seedAttempted.current = true;
+          const seeded = await q.seedExampleIfNeeded(sb);
+          if (cancelled) return;
+          if (seeded) {
+            const refreshed = await q.fetchProyectos(sb);
+            if (!cancelled) setProyectos(refreshed);
+          } else {
+            setProyectos(data);
+          }
+        } else {
+          setProyectos(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, [setProyectos]);
 
   const create = useCallback(async (data: ProyectoInsert) => {

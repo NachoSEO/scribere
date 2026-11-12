@@ -41,6 +41,14 @@ async function getUserId(sb: SupabaseClient): Promise<string> {
   throw new Error("No authenticated user found. Log in or set NEXT_PUBLIC_DEV_USER_ID for local development.");
 }
 
+// ── Seed example project ─────────────────────────────────
+
+export async function seedExampleIfNeeded(sb: SupabaseClient): Promise<boolean> {
+  const { data, error } = await sb.rpc("seed_example_if_needed");
+  if (error) throw error;
+  return data as boolean;
+}
+
 // ── Proyectos ─────────────────────────────────────────────
 
 export async function fetchProyectos(sb: SupabaseClient): Promise<Proyecto[]> {
